@@ -44,39 +44,79 @@ const int FxLine::FxLineHeight = 287;
 QPixmap * FxLine::s_sendBgArrow = NULL;
 QPixmap * FxLine::s_receiveBgArrow = NULL;
 
+class ElidedLabel : public QLabel
+{
+public:
+	ElidedLabel(QWidget * parent = 0, Qt::WindowFlags f = 0) : QLabel (parent, f)
+	{
+		initLabel();
+	}
+
+	ElidedLabel(const QString & text, QWidget * parent = 0, Qt::WindowFlags f = 0) : QLabel (text, parent, f)
+	{
+		initLabel();
+	}
+
+	void initLabel()
+	{
+		//setSizePolicy( QSizePolicy::Preferred, QSizePolicy::Minimum);
+	}
+
+	void setText(const QString & text)
+	{
+		QFontMetrics metrics( this->font() );
+		QString elidedText = metrics.elidedText( text, Qt::ElideMiddle, width() );
+
+		QLabel::setText(elidedText);
+	}
+};
+
 FxLine::FxLine( QWidget * _parent, FxMixerView * _mv, int _channelIndex) :
 	QWidget( _parent ),
 	m_mv( _mv ),
 	m_channelIndex( _channelIndex ),
 	m_backgroundActive( Qt::SolidPattern )
 {
-	if( ! s_sendBgArrow )
+	/*if( ! s_sendBgArrow )
 	{
 		s_sendBgArrow = new QPixmap( embed::getIconPixmap( "send_bg_arrow", 29, 56 ) );
 	}
 	if( ! s_receiveBgArrow )
 	{
 		s_receiveBgArrow = new QPixmap( embed::getIconPixmap( "receive_bg_arrow", 29, 56 ) );
-	}
+	}*/
 
-	setFixedSize( 33, FxLineHeight );
-	setAttribute( Qt::WA_OpaquePaintEvent, true );
+	setFixedSize( 70, FxLineHeight );
+	//setAttribute( Qt::WA_OpaquePaintEvent, true );
 	setCursor( QCursor( embed::getIconPixmap( "hand" ), 3, 3 ) );
 
 	// mixer sends knob
-	m_sendKnob = new Knob( knobBright_26, this, tr("Channel send amount") );
-	m_sendKnob->move( 3, 22 );
-	m_sendKnob->setVisible(false);
+	/*m_sendKnob = new Knob( knobBright_26, this, tr("Channel send amount") );
+	//m_sendKnob->move( 3, 22 );
+	m_sendKnob->setVisible(false);*/
 
 	// send button indicator
-	m_sendBtn = new SendButtonIndicator( this, this, m_mv );
-	m_sendBtn->move( 2, 2 );
+	/*m_sendBtn = new SendButtonIndicator( this, this, m_mv );
+	//m_sendBtn->move( 2, 2 );*/
 
 	// channel number
 	m_lcd = new LcdWidget( 2, this );
 	m_lcd->setValue( m_channelIndex );
-	m_lcd->move( 4, 58 );
+	//m_lcd->move( 4, 58 );
 	m_lcd->setMarginWidth( 1 );
+
+	m_lcd->hide();
+
+	m_elidedNameLabel = new ElidedLabel(this);
+	m_elidedNameLabel->setAlignment(Qt::AlignVCenter);
+	m_elidedNameLabel->setStyleSheet("font-size: 8pt; qproperty-alignment: AlignCenter;");
+
+	//m_elidedNameLabel->setStyleSheet("background-color:red;");
+
+	FxMixer * mix = Engine::fxMixer();
+	QString channelName = mix->effectChannel( m_channelIndex )->m_name;
+
+	updateChannelName(channelName);
 	
 	setWhatsThis( tr(
 	"The FX channel receives input from one or more instrument tracks.\n "
@@ -109,6 +149,11 @@ void FxLine::setChannelIndex(int index) {
 	m_lcd->update();
 }
 
+QWidget* FxLine::getNameWidget()
+{
+	return m_elidedNameLabel;
+}
+
 
 void FxLine::drawFxLine( QPainter* p, const FxLine *fxLine, const QString& name, bool isActive, bool sendToThis, bool receiveFromThis )
 {
@@ -131,26 +176,44 @@ void FxLine::drawFxLine( QPainter* p, const FxLine *fxLine, const QString& name,
 	p->drawRect( 0, 0, width-1, height-1 );
 
 	// draw the mixer send background
-	if( sendToThis )
+	/*if( sendToThis )
 	{
 		p->drawPixmap( 2, 0, 29, 56, *s_sendBgArrow );
 	}
 	else if( receiveFromThis )
 	{
 		p->drawPixmap( 2, 0, 29, 56, *s_receiveBgArrow );
+	}*/
+
+	if (fxLine->m_channelIndex == 0)
+	{
+		// Don't paint the index for the master channel?
+		return;
 	}
 
-	// draw the channel name
-	p->rotate( -90 );
+	QString indexLabel = QString::number(fxLine->m_channelIndex);
 
-	p->setFont( pointSizeF( fxLine->font(), 7.5f ) );	
-	p->setPen( sh_color );
-	p->drawText( -146, 21, name ); 
-	
-	p->setPen( isActive ? bt_color : te_color );
+	QFont currentFont = fxLine->font();
+	currentFont.setItalic(true);
+	currentFont.setPointSizeF(16);
+	p->setFont(currentFont);
+	//p->setBrush(QColor(255, 255, 255, 255));
+	p->setPen(QColor(255, 255, 255, 63));
+	QFontMetrics metrics(currentFont);
+	QRect textRect = metrics.boundingRect(indexLabel);
+	//int pixelWidth = metrics.width(indexLabel);
+	//int pixelHeight = metrics.height();
+	int pixelWidth = textRect.width();
+	int pixelHeight = textRect.height();
 
-	p->drawText( -145, 20, name );
+	p->drawText( fxLine->width() - pixelWidth - 10, pixelHeight, indexLabel );
+	//p->drawText( fxLine->width() - pixelWidth - 10, fxLine->height() - pixelHeight + 10, indexLabel );
+}
 
+void FxLine::updateChannelName(const QString & channelName)
+{
+	m_elidedNameLabel->setText(channelName);
+	m_elidedNameLabel->setToolTip(channelName);
 }
 
 
@@ -224,6 +287,7 @@ void FxLine::renameChannel()
 	{
 		mix->effectChannel( m_channelIndex )->m_name = new_name;
 		update();
+		updateChannelName(new_name);
 	}
 }
 

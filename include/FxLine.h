@@ -36,6 +36,8 @@
 class FxMixerView;
 class SendButtonIndicator;
 
+class ElidedLabel;
+
 class FxLine : public QWidget
 {
 	Q_OBJECT
@@ -55,6 +57,10 @@ public:
 	Knob * m_sendKnob;
 	SendButtonIndicator * m_sendBtn;
 
+	LcdWidget* getIndexLCD() { return m_lcd; }
+
+	QWidget* getNameWidget();
+
 	QBrush backgroundActive() const;
 	void setBackgroundActive( const QBrush & c );
 
@@ -62,9 +68,11 @@ public:
 
 private:
 	static void drawFxLine( QPainter* p, const FxLine *fxLine, const QString& name, bool isActive, bool sendToThis, bool receiveFromThis );
+	void updateChannelName(const QString & channelName);
 
 	FxMixerView * m_mv;
 	LcdWidget* m_lcd;
+	ElidedLabel * m_elidedNameLabel;
 	int m_channelIndex;
 	QBrush m_backgroundActive;
 	static QPixmap * s_sendBgArrow;

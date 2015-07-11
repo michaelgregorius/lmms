@@ -270,36 +270,50 @@ FxMixerView::FxChannelView::FxChannelView(QWidget * _parent, FxMixerView * _mv,
 {
 	m_fxLine = new FxLine(_parent, _mv, channelIndex);
 
+	m_fxLine->setLayout(new QVBoxLayout(m_fxLine));
+
+	//m_fxLine->layout()->addWidget(m_fxLine->m_sendBtn);
+	//m_fxLine->layout()->addWidget(m_fxLine->m_sendKnob);
+	m_fxLine->layout()->addWidget(m_fxLine->getIndexLCD());
+
 	FxChannel *fxChannel = Engine::fxMixer()->effectChannel(channelIndex);
 
 	m_fader = new Fader( &fxChannel->m_volumeModel,
 					tr( "FX Fader %1" ).arg( channelIndex ), m_fxLine );
-	m_fader->move( 16-m_fader->width()/2,
+	/*m_fader->move( 16-m_fader->width()/2,
 					m_fxLine->height()-
-					m_fader->height()-5 );
-
-	m_muteBtn = new PixmapButton( m_fxLine, tr( "Mute" ) );
-	m_muteBtn->setModel( &fxChannel->m_muteModel );
-	m_muteBtn->setActiveGraphic(
-				embed::getIconPixmap( "led_off" ) );
-	m_muteBtn->setInactiveGraphic(
-				embed::getIconPixmap( "led_green" ) );
-	m_muteBtn->setCheckable( true );
-	m_muteBtn->move( 9,  m_fader->y()-11);
-	ToolTip::add( m_muteBtn, tr( "Mute this FX channel" ) );
+					m_fader->height()-5 );*/
 
 	m_soloBtn = new PixmapButton( m_fxLine, tr( "Solo" ) );
 	m_soloBtn->setModel( &fxChannel->m_soloModel );
 	m_soloBtn->setActiveGraphic(
-				embed::getIconPixmap( "led_red" ) );
+				embed::getIconPixmap( "solo_active" ) );
 	m_soloBtn->setInactiveGraphic(
-				embed::getIconPixmap( "led_off" ) );
+				embed::getIconPixmap( "solo_inactive" ) );
 	m_soloBtn->setCheckable( true );
-	m_soloBtn->move( 9,  m_fader->y()-21);
+	//m_soloBtn->move( 9,  m_fader->y()-21);
 	connect(&fxChannel->m_soloModel, SIGNAL( dataChanged() ),
 			_mv, SLOT ( toggledSolo() ) );
 	ToolTip::add( m_soloBtn, tr( "Solo FX channel" ) );
+
+	m_fxLine->layout()->addWidget(m_soloBtn);
+
+	m_muteBtn = new PixmapButton( m_fxLine, tr( "Mute" ) );
+	m_muteBtn->setModel( &fxChannel->m_muteModel );
+	m_muteBtn->setActiveGraphic(
+				embed::getIconPixmap( "mute_active" ) );
+	m_muteBtn->setInactiveGraphic(
+				embed::getIconPixmap( "mute_inactive" ) );
+	m_muteBtn->setCheckable( true );
+	//m_muteBtn->move( 9,  m_fader->y()-11);
+	ToolTip::add( m_muteBtn, tr( "Mute this FX channel" ) );
+
+	m_fxLine->layout()->addWidget(m_muteBtn);
 	
+	m_fxLine->layout()->addWidget(m_fader);
+
+	m_fxLine->layout()->addWidget(m_fxLine->getNameWidget());
+
 	// Create EffectRack for the channel
 	m_rackView = new EffectRackView( &fxChannel->m_fxChain, _mv->m_racksWidget );
 	m_rackView->setFixedSize( 245, FxLine::FxLineHeight );
@@ -340,7 +354,7 @@ void FxMixerView::setCurrentFxLine( FxLine * _line )
 
 void FxMixerView::updateFxLine(int index)
 {
-	FxMixer * mix = Engine::fxMixer();
+	/*FxMixer * mix = Engine::fxMixer();
 
 	// does current channel send to this channel?
 	int selIndex = m_currentFxLine->channelIndex();
@@ -361,7 +375,7 @@ void FxMixerView::updateFxLine(int index)
 	// disable the send button if it would cause an infinite loop
 	thisLine->m_sendBtn->setVisible(! mix->isInfiniteLoop(selIndex, index));
 	thisLine->m_sendBtn->updateLightStatus();
-	thisLine->update();
+	thisLine->update();*/
 }
 
 
