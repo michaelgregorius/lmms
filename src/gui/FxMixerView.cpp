@@ -61,7 +61,7 @@ FxMixerView::FxMixerView() :
 	//setPalette( pal );
 
 	setAutoFillBackground( true );
-	setSizePolicy( QSizePolicy::Preferred, QSizePolicy::Fixed );
+	setSizePolicy( QSizePolicy::Expanding, QSizePolicy::Fixed );
 
 	setWindowTitle( tr( "FX-Mixer" ) );
 	setWindowIcon( embed::getIconPixmap( "fx_mixer" ) );
@@ -121,7 +121,7 @@ FxMixerView::FxMixerView() :
 	channelArea->setVerticalScrollBarPolicy( Qt::ScrollBarAlwaysOff );
 	channelArea->setFrameStyle( QFrame::NoFrame );
 	channelArea->setMinimumWidth( fxLineSize.width() * 6 );
-	channelArea->setFixedHeight( fxLineSize.height() +
+	channelArea->setMinimumHeight( fxLineSize.height() +
 			style()->pixelMetric( QStyle::PM_ScrollBarExtent ) );
 	ml->addWidget( channelArea, 1, Qt::AlignTop );
 
@@ -274,7 +274,6 @@ FxMixerView::FxChannelView::FxChannelView(QWidget * _parent, FxMixerView * _mv,
 
 	//m_fxLine->layout()->addWidget(m_fxLine->m_sendBtn);
 	//m_fxLine->layout()->addWidget(m_fxLine->m_sendKnob);
-	m_fxLine->layout()->addWidget(m_fxLine->getIndexLCD());
 
 	FxChannel *fxChannel = Engine::fxMixer()->effectChannel(channelIndex);
 
@@ -316,7 +315,8 @@ FxMixerView::FxChannelView::FxChannelView(QWidget * _parent, FxMixerView * _mv,
 
 	// Create EffectRack for the channel
 	m_rackView = new EffectRackView( &fxChannel->m_fxChain, _mv->m_racksWidget );
-	m_rackView->setFixedSize( 245, FxLine::FxLineHeight );
+	//m_rackView->setFixedSize( 245, FxLine::FxLineHeight );
+	m_rackView->setMinimumSize( 245, FxLine::FxLineHeight );
 }
 
 

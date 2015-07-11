@@ -54,10 +54,8 @@ public:
 	inline int channelIndex() { return m_channelIndex; }
 	void setChannelIndex(int index);
 
-	Knob * m_sendKnob;
-	SendButtonIndicator * m_sendBtn;
-
-	LcdWidget* getIndexLCD() { return m_lcd; }
+	/*Knob * m_sendKnob;
+	SendButtonIndicator * m_sendBtn;*/
 
 	QWidget* getNameWidget();
 
@@ -71,7 +69,6 @@ private:
 	void updateChannelName(const QString & channelName);
 
 	FxMixerView * m_mv;
-	LcdWidget* m_lcd;
 	ElidedLabel * m_elidedNameLabel;
 	int m_channelIndex;
 	QBrush m_backgroundActive;

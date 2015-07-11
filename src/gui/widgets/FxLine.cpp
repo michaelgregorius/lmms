@@ -40,7 +40,7 @@
 #include "gui_templates.h"
 #include "CaptionMenu.h"
 
-const int FxLine::FxLineHeight = 287;
+const int FxLine::FxLineHeight = 400;
 QPixmap * FxLine::s_sendBgArrow = NULL;
 QPixmap * FxLine::s_receiveBgArrow = NULL;
 
@@ -59,7 +59,6 @@ public:
 
 	void initLabel()
 	{
-		//setSizePolicy( QSizePolicy::Preferred, QSizePolicy::Minimum);
 	}
 
 	void setText(const QString & text)
@@ -86,7 +85,8 @@ FxLine::FxLine( QWidget * _parent, FxMixerView * _mv, int _channelIndex) :
 		s_receiveBgArrow = new QPixmap( embed::getIconPixmap( "receive_bg_arrow", 29, 56 ) );
 	}*/
 
-	setFixedSize( 70, FxLineHeight );
+	//setFixedSize( 70, FxLineHeight );
+	setMinimumSize( 70, FxLineHeight );
 	//setAttribute( Qt::WA_OpaquePaintEvent, true );
 	setCursor( QCursor( embed::getIconPixmap( "hand" ), 3, 3 ) );
 
@@ -100,13 +100,6 @@ FxLine::FxLine( QWidget * _parent, FxMixerView * _mv, int _channelIndex) :
 	//m_sendBtn->move( 2, 2 );*/
 
 	// channel number
-	m_lcd = new LcdWidget( 2, this );
-	m_lcd->setValue( m_channelIndex );
-	//m_lcd->move( 4, 58 );
-	m_lcd->setMarginWidth( 1 );
-
-	m_lcd->hide();
-
 	m_elidedNameLabel = new ElidedLabel(this);
 	m_elidedNameLabel->setAlignment(Qt::AlignVCenter);
 	m_elidedNameLabel->setStyleSheet("font-size: 8pt; qproperty-alignment: AlignCenter;");
@@ -136,17 +129,17 @@ FxLine::FxLine( QWidget * _parent, FxMixerView * _mv, int _channelIndex) :
 
 FxLine::~FxLine()
 {
-	delete m_sendKnob;
-	delete m_sendBtn;
-	delete m_lcd;
+	/*delete m_sendKnob;
+	delete m_sendBtn;*/
 }
 
 
 void FxLine::setChannelIndex(int index) {
 	m_channelIndex = index;
 
-	m_lcd->setValue( m_channelIndex );
-	m_lcd->update();
+	// TODO Implement the channel index as a label and update here!
+	/*m_lcd->setValue( m_channelIndex );
+	m_lcd->update();*/
 }
 
 QWidget* FxLine::getNameWidget()
