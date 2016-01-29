@@ -37,15 +37,11 @@ TimeDisplayWidget::TimeDisplayWidget() :
 	QWidget(),
 	m_displayMode( MinutesSeconds ),
 	m_spinBoxesLayout( this ),
-	m_majorLCD( 4, this ),
-	m_minorLCD( 2, this ),
-	m_milliSecondsLCD( 3, this )
+	m_infoDisplay( this )
 {
 	m_spinBoxesLayout.setSpacing( 0 );
 	m_spinBoxesLayout.setMargin( 0 );
-	m_spinBoxesLayout.addWidget( &m_majorLCD );
-	m_spinBoxesLayout.addWidget( &m_minorLCD );
-	m_spinBoxesLayout.addWidget( &m_milliSecondsLCD );
+	m_spinBoxesLayout.addWidget( &m_infoDisplay );
 
 	setMaximumHeight( 32 );
 
@@ -56,58 +52,83 @@ TimeDisplayWidget::TimeDisplayWidget() :
 
 	connect( gui->mainWindow(), SIGNAL( periodicUpdate() ),
 					this, SLOT( updateTime() ) );
+
+	QFont newFont = m_infoDisplay.font();
+	newFont.setPointSize( 15 );
+	m_infoDisplay.setFont( newFont );
+	m_infoDisplay.setStyleSheet( "QLabel { background-color: black; border-radius: 5px; padding: 0px 10px 0px 10px; }" );
 }
 
 void TimeDisplayWidget::setDisplayMode( DisplayMode displayMode )
 {
 	m_displayMode = displayMode;
-
-	switch( m_displayMode )
-	{
-		case MinutesSeconds:
-			m_majorLCD.setLabel( tr( "MIN" ) );
-			m_minorLCD.setLabel( tr( "SEC" ) );
-			m_milliSecondsLCD.setLabel( tr( "MSEC" ) );
-			break;
-
-		case BarsTicks:
-			m_majorLCD.setLabel( tr( "BAR" ) );
-			m_minorLCD.setLabel( tr( "BEAT" ) );
-			m_milliSecondsLCD.setLabel( tr( "TICK" ) );
-			break;
-
-		default: break;
-	}
 }
 
+void prependWithZerosUntilTargetLengthReached( QString & stringToFill, int targetLength )
+{
+	int length = qMin( stringToFill.length(), targetLength );
+	QString fillZeros;
+	fillZeros.fill( '0', targetLength - length );
+	stringToFill.prepend( fillZeros );
+}
 
+QString TimeDisplayWidget::format( int value1, int value2, int value3 ) const
+{
+	if ( m_displayMode == MinutesSeconds )
+	{
+		QString minutes = QString::number( value1 );
+		prependWithZerosUntilTargetLengthReached( minutes, 4 );
+
+		QString seconds = QString::number( value2 );
+		prependWithZerosUntilTargetLengthReached( seconds, 2 );
+
+		QString milliseconds = QString::number( value3 );
+		prependWithZerosUntilTargetLengthReached( milliseconds, 3 );
+
+		return minutes + " : " + seconds + " . " + milliseconds;
+	}
+
+	if ( m_displayMode == BarsTicks )
+	{
+		QString bars = QString::number( value1 );
+		prependWithZerosUntilTargetLengthReached( bars, 4 );
+
+		QString beats = QString::number( value2 );
+		prependWithZerosUntilTargetLengthReached( beats, 2 );
+
+		QString ticks = QString::number( value3 );
+		prependWithZerosUntilTargetLengthReached( ticks, 2 );
+
+		return bars + " : " + beats + " . " + ticks;
+	}
+
+	// Fallback
+	return QString::number( value1 ) + " : " + QString::number( value2 ) + " . " + QString::number( value3 );
+}
 
 
 void TimeDisplayWidget::updateTime()
 {
 	Song* s = Engine::getSong();
 
-	switch( m_displayMode )
+	if ( m_displayMode == MinutesSeconds )
 	{
-		case MinutesSeconds:
-			int msec;
-			msec = s->getMilliseconds();
-			m_majorLCD.setValue(msec / 60000);
-			m_minorLCD.setValue((msec / 1000) % 60);
-			m_milliSecondsLCD.setValue(msec % 1000);
-			break;
+		int const msec(s->getMilliseconds());
+		int minutes = msec / 60000;
+		int seconds = ( s->getMilliseconds() / 1000 ) % 60;
+		int milliseconds = s->getMilliseconds() % 1000;
 
-		case BarsTicks:
-			int tick;
-			tick = s->getPlayPos().getTicks();
-			m_majorLCD.setValue((int)(tick / s->ticksPerTact()) + 1);
-			m_minorLCD.setValue((tick % s->ticksPerTact()) /
-						 (s->ticksPerTact() / s->getTimeSigModel().getNumerator() ) +1);
-			m_milliSecondsLCD.setValue((tick % s->ticksPerTact()) %
-							(s->ticksPerTact() / s->getTimeSigModel().getNumerator()));
-			break;
+		m_infoDisplay.setText( format( minutes, seconds, milliseconds ) );
+	}
+	else if ( m_displayMode == BarsTicks )
+	{
+		int const tick = s->getPlayPos().getTicks();
 
-		default: break;
+		int bars = (int)(tick / s->ticksPerTact() ) + 1;
+		int beats = ( tick % s->ticksPerTact() ) / ( s->ticksPerTact() / s->getTimeSigModel().getNumerator() ) + 1;
+		int ticks = ( tick % s->ticksPerTact() ) % ( s->ticksPerTact() / s->getTimeSigModel().getNumerator() );
+
+		m_infoDisplay.setText( format( bars, beats, ticks ) );
 	}
 }
 

@@ -28,6 +28,7 @@
 
 #include <QWidget>
 #include <QHBoxLayout>
+#include <QLabel>
 
 #include "LcdWidget.h"
 
@@ -49,21 +50,20 @@ private slots:
 
 
 private:
-	enum DisplayModes
+	enum DisplayMode
 	{
 		MinutesSeconds,
 		BarsTicks,
 		DisplayModeCount
 	};
-	typedef DisplayModes DisplayMode;
+
+	QString format( int value1, int value2, int value3 ) const;
 
 	void setDisplayMode( DisplayMode displayMode );
 
 	DisplayMode m_displayMode;
 	QHBoxLayout m_spinBoxesLayout;
-	LcdWidget m_majorLCD;
-	LcdWidget m_minorLCD;
-	LcdWidget m_milliSecondsLCD;
+	QLabel      m_infoDisplay;
 
 } ;
 
