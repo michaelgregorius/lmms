@@ -106,16 +106,20 @@ SongEditor::SongEditor( Song * song ) :
 
 
 	// add some essential widgets to global tool-bar
-	QWidget * tb = gui->mainWindow()->toolBar();
+	MainWindow* mainWindow = gui->mainWindow();
+	QWidget * mainWindowToolBar = mainWindow->toolBar();
+	QHBoxLayout * toolBarMainLayout = mainWindow->getToolbarMainLayout();
+	Qt::Alignment centerBottomAlignment = Qt::AlignHCenter | Qt::AlignBottom;
 
-	gui->mainWindow()->addSpacingToToolBar( 40 );
+	toolBarMainLayout->addWidget( new TimeDisplayWidget );
 
-	m_tempoSpinBox = new LcdSpinBox( 3, tb, tr( "Tempo" ) );
+	m_tempoSpinBox = new LcdSpinBox( 3, mainWindowToolBar, tr( "Tempo" ) );
 	m_tempoSpinBox->setModel( &m_song->m_tempoModel );
 	m_tempoSpinBox->setLabel( tr( "TEMPO" ) );
 	ToolTip::add( m_tempoSpinBox, tr( "Tempo in BPM" ) );
 
-	int tempoSpinBoxCol = gui->mainWindow()->addWidgetToToolBar( m_tempoSpinBox, 0 );
+	toolBarMainLayout->addWidget( m_tempoSpinBox );
+	toolBarMainLayout->setAlignment( m_tempoSpinBox, centerBottomAlignment );
 
 #if 0
 	toolButton * hq_btn = new toolButton( embed::getIconPixmap( "hq_mode" ),
@@ -128,27 +132,20 @@ SongEditor::SongEditor( Song * song ) :
 	gui->mainWindow()->addWidgetToToolBar( hq_btn, 1, col );
 #endif
 
-	gui->mainWindow()->addWidgetToToolBar( new TimeDisplayWidget, 1, tempoSpinBoxCol );
-
-	gui->mainWindow()->addSpacingToToolBar( 10 );
-
 	m_timeSigDisplay = new MeterDialog( this, true );
 	m_timeSigDisplay->setModel( &m_song->m_timeSigModel );
-	gui->mainWindow()->addWidgetToToolBar( m_timeSigDisplay );
+	toolBarMainLayout->addWidget( m_timeSigDisplay );
+	toolBarMainLayout->setAlignment( m_timeSigDisplay, centerBottomAlignment );
 
-	gui->mainWindow()->addSpacingToToolBar( 10 );
-
-
-	QLabel * master_vol_lbl = new QLabel( tb );
+	QLabel * master_vol_lbl = new QLabel( mainWindowToolBar );
 	master_vol_lbl->setPixmap( embed::getIconPixmap( "master_volume" ) );
 
-	m_masterVolumeSlider = new AutomatableSlider( tb,
+	m_masterVolumeSlider = new AutomatableSlider( mainWindowToolBar,
 							tr( "Master volume" ) );
 	m_masterVolumeSlider->setModel( &m_song->m_masterVolumeModel );
 	m_masterVolumeSlider->setOrientation( Qt::Vertical );
 	m_masterVolumeSlider->setPageStep( 1 );
 	m_masterVolumeSlider->setTickPosition( QSlider::TicksLeft );
-	m_masterVolumeSlider->setFixedSize( 26, 60 );
 	m_masterVolumeSlider->setTickInterval( 50 );
 	ToolTip::add( m_masterVolumeSlider, tr( "Master volume" ) );
 
@@ -165,23 +162,18 @@ SongEditor::SongEditor( Song * song ) :
 	m_mvsStatus->setTitle( tr( "Master volume" ) );
 	m_mvsStatus->setPixmap( embed::getIconPixmap( "master_volume" ) );
 
-	gui->mainWindow()->addWidgetToToolBar( master_vol_lbl );
-	gui->mainWindow()->addWidgetToToolBar( m_masterVolumeSlider );
+	toolBarMainLayout->addWidget( master_vol_lbl );
+	toolBarMainLayout->addWidget( m_masterVolumeSlider );
 
 
-	gui->mainWindow()->addSpacingToToolBar( 10 );
-
-
-	QLabel * master_pitch_lbl = new QLabel( tb );
+	QLabel * master_pitch_lbl = new QLabel( mainWindowToolBar );
 	master_pitch_lbl->setPixmap( embed::getIconPixmap( "master_pitch" ) );
-	master_pitch_lbl->setFixedHeight( 64 );
 
-	m_masterPitchSlider = new AutomatableSlider( tb, tr( "Master pitch" ) );
+	m_masterPitchSlider = new AutomatableSlider( mainWindowToolBar, tr( "Master pitch" ) );
 	m_masterPitchSlider->setModel( &m_song->m_masterPitchModel );
 	m_masterPitchSlider->setOrientation( Qt::Vertical );
 	m_masterPitchSlider->setPageStep( 1 );
 	m_masterPitchSlider->setTickPosition( QSlider::TicksLeft );
-	m_masterPitchSlider->setFixedSize( 26, 60 );
 	m_masterPitchSlider->setTickInterval( 12 );
 	ToolTip::add( m_masterPitchSlider, tr( "Master pitch" ) );
 	connect( m_masterPitchSlider, SIGNAL( logicValueChanged( int ) ), this,
@@ -197,13 +189,11 @@ SongEditor::SongEditor( Song * song ) :
 	m_mpsStatus->setTitle( tr( "Master pitch" ) );
 	m_mpsStatus->setPixmap( embed::getIconPixmap( "master_pitch" ) );
 
-	gui->mainWindow()->addWidgetToToolBar( master_pitch_lbl );
-	gui->mainWindow()->addWidgetToToolBar( m_masterPitchSlider );
-
-	gui->mainWindow()->addSpacingToToolBar( 10 );
+	toolBarMainLayout->addWidget( master_pitch_lbl );
+	toolBarMainLayout->addWidget( m_masterPitchSlider );
 
 	// create widget for visualization- and cpu-load-widget
-	QWidget * vc_w = new QWidget( tb );
+	QWidget * vc_w = new QWidget( mainWindowToolBar );
 	QVBoxLayout * vcw_layout = new QVBoxLayout( vc_w );
 	vcw_layout->setMargin( 0 );
 	vcw_layout->setSpacing( 0 );
@@ -215,7 +205,9 @@ SongEditor::SongEditor( Song * song ) :
 	vcw_layout->addWidget( new CPULoadWidget( vc_w ) );
 	vcw_layout->addStretch();
 
-	gui->mainWindow()->addWidgetToToolBar( vc_w );
+	toolBarMainLayout->addWidget( vc_w );
+
+	toolBarMainLayout->addStretch(1);
 
 	static_cast<QVBoxLayout *>( layout() )->insertWidget( 0, m_timeLine );
 

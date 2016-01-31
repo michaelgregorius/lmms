@@ -43,8 +43,6 @@ TimeDisplayWidget::TimeDisplayWidget() :
 	m_spinBoxesLayout.setMargin( 0 );
 	m_spinBoxesLayout.addWidget( &m_infoDisplay );
 
-	setMaximumHeight( 32 );
-
 	ToolTip::add( this, tr( "Time units" ) );
 
 	// update labels of LCD spinboxes
@@ -54,9 +52,10 @@ TimeDisplayWidget::TimeDisplayWidget() :
 					this, SLOT( updateTime() ) );
 
 	QFont newFont = m_infoDisplay.font();
-	newFont.setPointSize( 15 );
+	//newFont.setPointSize( 20 );
+	newFont.setPixelSize( 32 );
 	m_infoDisplay.setFont( newFont );
-	m_infoDisplay.setStyleSheet( "QLabel { background-color: black; border-radius: 5px; padding: 0px 10px 0px 10px; }" );
+	setStyleSheet( "QLabel { background-color: black; border-radius: 5px; padding: 0px 10px 0px 10px; }" );
 }
 
 void TimeDisplayWidget::setDisplayMode( DisplayMode displayMode )

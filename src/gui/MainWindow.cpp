@@ -101,19 +101,19 @@ MainWindow::MainWindow() :
 #endif
 	setAttribute( Qt::WA_DeleteOnClose );
 
-	QWidget * main_widget = new QWidget( this );
-	QVBoxLayout * vbox = new QVBoxLayout( main_widget );
-	vbox->setSpacing( 0 );
-	vbox->setMargin( 0 );
+	QWidget * centralWidget = new QWidget( this );
+	QVBoxLayout * centralWidgetVBoxLayout = new QVBoxLayout( centralWidget );
+	centralWidgetVBoxLayout->setSpacing( 0 );
+	centralWidgetVBoxLayout->setMargin( 0 );
 
-	QWidget * w = new QWidget( main_widget );
-	QHBoxLayout * hbox = new QHBoxLayout( w );
-	hbox->setSpacing( 0 );
-	hbox->setMargin( 0 );
+	QWidget * sideBarAndWorkspace = new QWidget( centralWidget );
+	QHBoxLayout * sideBarAndWorkspaceHBoxLayout = new QHBoxLayout( sideBarAndWorkspace );
+	sideBarAndWorkspaceHBoxLayout->setSpacing( 0 );
+	sideBarAndWorkspaceHBoxLayout->setMargin( 0 );
 
-	SideBar * sideBar = new SideBar( Qt::Vertical, w );
+	SideBar * sideBar = new SideBar( Qt::Vertical, sideBarAndWorkspace );
 
-	QSplitter * splitter = new QSplitter( Qt::Horizontal, w );
+	QSplitter * splitter = new QSplitter( Qt::Horizontal, sideBarAndWorkspace );
 	splitter->setChildrenCollapsible( false );
 
 	ConfigManager* confMgr = ConfigManager::inst();
@@ -194,24 +194,28 @@ MainWindow::MainWindow() :
 	m_workspace->setHorizontalScrollBarPolicy( Qt::ScrollBarAsNeeded );
 	m_workspace->setVerticalScrollBarPolicy( Qt::ScrollBarAsNeeded );
 
-	hbox->addWidget( sideBar );
-	hbox->addWidget( splitter );
+	sideBarAndWorkspaceHBoxLayout->addWidget( sideBar );
+	sideBarAndWorkspaceHBoxLayout->addWidget( splitter );
 
 
 	// create global-toolbar at the top of our window
-	m_toolBar = new QWidget( main_widget );
+	m_toolBar = new QWidget( centralWidget );
 	m_toolBar->setObjectName( "mainToolbar" );
+
 	m_toolBar->setFixedHeight( 64 );
-	m_toolBar->move( 0, 0 );
 
 	// add layout for organizing quite complex toolbar-layouting
-	m_toolBarLayout = new QGridLayout( m_toolBar/*, 2, 1*/ );
-	m_toolBarLayout->setMargin( 0 );
-	m_toolBarLayout->setSpacing( 0 );
+	m_toolBarMainLayout = new QHBoxLayout( m_toolBar );
+	m_toolBarMainLayout->setMargin( 0 );
+	m_toolBarMainLayout->setSpacing( 10 );
+	m_toolBarGridLayout = new QGridLayout();
+	m_toolBarGridLayout->setMargin( 0 );
+	m_toolBarGridLayout->setSpacing( 0 );
+	m_toolBarMainLayout->addLayout( m_toolBarGridLayout );
 
-	vbox->addWidget( m_toolBar );
-	vbox->addWidget( w );
-	setCentralWidget( main_widget );
+	centralWidgetVBoxLayout->addWidget( m_toolBar );
+	centralWidgetVBoxLayout->addWidget( sideBarAndWorkspace );
+	setCentralWidget( centralWidget );
 
 	m_updateTimer.start( 1000 / 60, this );  // 60 fps
 
@@ -468,14 +472,14 @@ void MainWindow::finalize()
 	m_metronomeToggle->setCheckable(true);
 	m_metronomeToggle->setChecked(Engine::mixer()->isMetronomeActive());
 
-	m_toolBarLayout->setColumnMinimumWidth( 0, 5 );
-	m_toolBarLayout->addWidget( project_new, 0, 1 );
-	m_toolBarLayout->addWidget( project_new_from_template, 0, 2 );
-	m_toolBarLayout->addWidget( project_open, 0, 3 );
-	m_toolBarLayout->addWidget( project_open_recent, 0, 4 );
-	m_toolBarLayout->addWidget( project_save, 0, 5 );
-	m_toolBarLayout->addWidget( project_export, 0, 6 );
-	m_toolBarLayout->addWidget( m_metronomeToggle, 0, 7 );
+	m_toolBarGridLayout->setColumnMinimumWidth( 0, 5 );
+	m_toolBarGridLayout->addWidget( project_new, 0, 1 );
+	m_toolBarGridLayout->addWidget( project_new_from_template, 0, 2 );
+	m_toolBarGridLayout->addWidget( project_open, 0, 3 );
+	m_toolBarGridLayout->addWidget( project_open_recent, 0, 4 );
+	m_toolBarGridLayout->addWidget( project_save, 0, 5 );
+	m_toolBarGridLayout->addWidget( project_export, 0, 6 );
+	m_toolBarGridLayout->addWidget( m_metronomeToggle, 0, 7 );
 
 
 	// window-toolbar
@@ -536,14 +540,14 @@ void MainWindow::finalize()
 								m_toolBar );
 	project_notes_window->setShortcut( Qt::Key_F11 );
 
-	m_toolBarLayout->addWidget( song_editor_window, 1, 1 );
-	m_toolBarLayout->addWidget( bb_editor_window, 1, 2 );
-	m_toolBarLayout->addWidget( piano_roll_window, 1, 3 );
-	m_toolBarLayout->addWidget( automation_editor_window, 1, 4 );
-	m_toolBarLayout->addWidget( fx_mixer_window, 1, 5 );
-	m_toolBarLayout->addWidget( controllers_window, 1, 6 );
-	m_toolBarLayout->addWidget( project_notes_window, 1, 7 );
-	m_toolBarLayout->setColumnStretch( 100, 1 );
+	m_toolBarGridLayout->addWidget( song_editor_window, 1, 1 );
+	m_toolBarGridLayout->addWidget( bb_editor_window, 1, 2 );
+	m_toolBarGridLayout->addWidget( piano_roll_window, 1, 3 );
+	m_toolBarGridLayout->addWidget( automation_editor_window, 1, 4 );
+	m_toolBarGridLayout->addWidget( fx_mixer_window, 1, 5 );
+	m_toolBarGridLayout->addWidget( controllers_window, 1, 6 );
+	m_toolBarGridLayout->addWidget( project_notes_window, 1, 7 );
+	m_toolBarGridLayout->setColumnStretch( 100, 1 );
 
 	// setup-dialog opened before?
 	if( !ConfigManager::inst()->value( "app", "configured" ).toInt() )
@@ -595,29 +599,6 @@ void MainWindow::finalize()
 
 
 
-
-int MainWindow::addWidgetToToolBar( QWidget * _w, int _row, int _col )
-{
-	int col = ( _col == -1 ) ? m_toolBarLayout->columnCount() + 7 : _col;
-	if( _w->height() > 32 || _row == -1 )
-	{
-		m_toolBarLayout->addWidget( _w, 0, col, 2, 1 );
-	}
-	else
-	{
-		m_toolBarLayout->addWidget( _w, _row, col );
-	}
-	return( col );
-}
-
-
-
-
-void MainWindow::addSpacingToToolBar( int _size )
-{
-	m_toolBarLayout->setColumnMinimumWidth( m_toolBarLayout->columnCount() +
-								7, _size );
-}
 
 SubWindow* MainWindow::addWindowedWidget(QWidget *w, Qt::WindowFlags windowFlags)
 {

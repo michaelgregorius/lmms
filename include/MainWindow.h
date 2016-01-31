@@ -35,6 +35,7 @@
 
 class QAction;
 class QDomElement;
+class QHBoxLayout;
 class QGridLayout;
 class QMdiArea;
 
@@ -57,8 +58,7 @@ public:
 		return m_toolBar;
 	}
 
-	int addWidgetToToolBar( QWidget * _w, int _row = -1, int _col = -1 );
-	void addSpacingToToolBar( int _size );
+	inline QHBoxLayout * getToolbarMainLayout() const { return m_toolBarMainLayout; }
 
 	// wrap the widget with a window decoration and add it to the workspace
 	LMMS_EXPORT SubWindow* addWindowedWidget(QWidget *w, Qt::WindowFlags windowFlags=0);
@@ -202,7 +202,8 @@ private:
 	QMdiArea * m_workspace;
 
 	QWidget * m_toolBar;
-	QGridLayout * m_toolBarLayout;
+	QHBoxLayout * m_toolBarMainLayout;
+	QGridLayout * m_toolBarGridLayout;
 
 	QMenu * m_templatesMenu;
 	QMenu * m_recentlyOpenedProjectsMenu;
