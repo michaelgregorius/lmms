@@ -36,12 +36,27 @@
 TimeDisplayWidget::TimeDisplayWidget() :
 	QWidget(),
 	m_displayMode( MinutesSeconds ),
-	m_spinBoxesLayout( this ),
-	m_infoDisplay( this )
+	m_gridLayout( this ),
+	m_firstValueDisplay(this),
+	m_secondValueDisplay(this),
+	m_thirdValueDisplay(this),
+	m_firstLabelDisplay(this),
+	m_secondLabelDisplay(this),
+	m_thirdLabelDisplay(this),
+	m_firstSeparator(":", this),
+	m_secondSeparator(".", this)
 {
-	m_spinBoxesLayout.setSpacing( 0 );
-	m_spinBoxesLayout.setMargin( 0 );
-	m_spinBoxesLayout.addWidget( &m_infoDisplay );
+	m_gridLayout.setSpacing( 0 );
+	m_gridLayout.setMargin( 0 );
+	m_gridLayout.setRowStretch(0, 1);
+	m_gridLayout.addWidget( &m_firstValueDisplay, 0, 0 );
+	m_gridLayout.addWidget( &m_firstSeparator, 0, 1 );
+	m_gridLayout.addWidget( &m_secondValueDisplay, 0, 2 );
+	m_gridLayout.addWidget( &m_secondSeparator, 0, 3 );
+	m_gridLayout.addWidget( &m_thirdValueDisplay, 0, 4 );
+	m_gridLayout.addWidget( &m_firstLabelDisplay, 1, 0, Qt::AlignRight );
+	m_gridLayout.addWidget( &m_secondLabelDisplay, 1, 2, Qt::AlignRight );
+	m_gridLayout.addWidget( &m_thirdLabelDisplay, 1, 4, Qt::AlignRight );
 
 	ToolTip::add( this, tr( "Time units" ) );
 
@@ -51,16 +66,25 @@ TimeDisplayWidget::TimeDisplayWidget() :
 	connect( gui->mainWindow(), SIGNAL( periodicUpdate() ),
 					this, SLOT( updateTime() ) );
 
-	QFont newFont = m_infoDisplay.font();
-	//newFont.setPointSize( 20 );
-	newFont.setPixelSize( 32 );
-	m_infoDisplay.setFont( newFont );
-	setStyleSheet( "QLabel { background-color: black; border-radius: 5px; padding: 0px 10px 0px 10px; }" );
+	QFont valueFont = m_firstValueDisplay.font();
+	valueFont.setPointSize(18);
+	m_firstValueDisplay.setFont(valueFont);
+	m_firstSeparator.setFont(valueFont);
+	m_secondValueDisplay.setFont(valueFont);
+	m_secondSeparator.setFont(valueFont);
+	m_thirdValueDisplay.setFont(valueFont);
+
+	QFont labelFont = m_firstLabelDisplay.font();
+	labelFont.setPointSize(6);
+	m_firstLabelDisplay.setFont(labelFont);
+	m_secondLabelDisplay.setFont(labelFont);
+	m_thirdLabelDisplay.setFont(labelFont);
 }
 
 void TimeDisplayWidget::setDisplayMode( DisplayMode displayMode )
 {
 	m_displayMode = displayMode;
+	updateLabelsByDisplayMode();
 }
 
 void prependWithZerosUntilTargetLengthReached( QString & stringToFill, int targetLength )
@@ -71,40 +95,13 @@ void prependWithZerosUntilTargetLengthReached( QString & stringToFill, int targe
 	stringToFill.prepend( fillZeros );
 }
 
-QString TimeDisplayWidget::format( int value1, int value2, int value3 ) const
+QString toStringWithPrependedZeroes(int value, int targetLength)
 {
-	if ( m_displayMode == MinutesSeconds )
-	{
-		QString minutes = QString::number( value1 );
-		prependWithZerosUntilTargetLengthReached( minutes, 4 );
+	QString valueAsString = QString::number(value);
+	prependWithZerosUntilTargetLengthReached(valueAsString, targetLength);
 
-		QString seconds = QString::number( value2 );
-		prependWithZerosUntilTargetLengthReached( seconds, 2 );
-
-		QString milliseconds = QString::number( value3 );
-		prependWithZerosUntilTargetLengthReached( milliseconds, 3 );
-
-		return minutes + " : " + seconds + " . " + milliseconds;
-	}
-
-	if ( m_displayMode == BarsTicks )
-	{
-		QString bars = QString::number( value1 );
-		prependWithZerosUntilTargetLengthReached( bars, 4 );
-
-		QString beats = QString::number( value2 );
-		prependWithZerosUntilTargetLengthReached( beats, 2 );
-
-		QString ticks = QString::number( value3 );
-		prependWithZerosUntilTargetLengthReached( ticks, 2 );
-
-		return bars + " : " + beats + " . " + ticks;
-	}
-
-	// Fallback
-	return QString::number( value1 ) + " : " + QString::number( value2 ) + " . " + QString::number( value3 );
+	return valueAsString;
 }
-
 
 void TimeDisplayWidget::updateTime()
 {
@@ -117,7 +114,9 @@ void TimeDisplayWidget::updateTime()
 		int seconds = ( s->getMilliseconds() / 1000 ) % 60;
 		int milliseconds = s->getMilliseconds() % 1000;
 
-		m_infoDisplay.setText( format( minutes, seconds, milliseconds ) );
+		m_firstValueDisplay.setText(toStringWithPrependedZeroes(minutes, 4));
+		m_secondValueDisplay.setText(toStringWithPrependedZeroes(seconds, 2));
+		m_thirdValueDisplay.setText(toStringWithPrependedZeroes(milliseconds, 3));
 	}
 	else if ( m_displayMode == BarsTicks )
 	{
@@ -127,7 +126,9 @@ void TimeDisplayWidget::updateTime()
 		int beats = ( tick % s->ticksPerTact() ) / ( s->ticksPerTact() / s->getTimeSigModel().getNumerator() ) + 1;
 		int ticks = ( tick % s->ticksPerTact() ) % ( s->ticksPerTact() / s->getTimeSigModel().getNumerator() );
 
-		m_infoDisplay.setText( format( bars, beats, ticks ) );
+		m_firstValueDisplay.setText(toStringWithPrependedZeroes(bars, 4));
+		m_secondValueDisplay.setText(toStringWithPrependedZeroes(beats, 2));
+		m_thirdValueDisplay.setText(toStringWithPrependedZeroes(ticks, 3));
 	}
 }
 
@@ -146,5 +147,27 @@ void TimeDisplayWidget::mousePressEvent( QMouseEvent* mouseEvent )
 		{
 			setDisplayMode( MinutesSeconds );
 		}
+	}
+}
+
+void TimeDisplayWidget::updateLabelsByDisplayMode()
+{
+	if ( m_displayMode == MinutesSeconds )
+	{
+		m_firstLabelDisplay.setText(tr("MIN"));
+		m_secondLabelDisplay.setText(tr("SEC"));
+		m_thirdLabelDisplay.setText(tr("MSEC"));
+	}
+	else if ( m_displayMode == BarsTicks )
+	{
+		m_firstLabelDisplay.setText(tr("BAR"));
+		m_secondLabelDisplay.setText(tr("BEAT"));
+		m_thirdLabelDisplay.setText(tr("TICK"));
+	}
+	else
+	{
+		m_firstLabelDisplay.setText("");
+		m_secondLabelDisplay.setText("");
+		m_thirdLabelDisplay.setText("");
 	}
 }

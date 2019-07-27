@@ -57,13 +57,20 @@ private:
 		DisplayModeCount
 	};
 
-	QString format( int value1, int value2, int value3 ) const;
-
 	void setDisplayMode( DisplayMode displayMode );
 
+	void updateLabelsByDisplayMode();
+
 	DisplayMode m_displayMode;
-	QHBoxLayout m_spinBoxesLayout;
-	QLabel      m_infoDisplay;
+	QGridLayout m_gridLayout;
+	QLabel      m_firstValueDisplay;
+	QLabel      m_secondValueDisplay;
+	QLabel      m_thirdValueDisplay;
+	QLabel      m_firstLabelDisplay;
+	QLabel      m_secondLabelDisplay;
+	QLabel      m_thirdLabelDisplay;
+	QLabel      m_firstSeparator;
+	QLabel      m_secondSeparator;
 
 } ;
 
