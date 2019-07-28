@@ -46,17 +46,20 @@ TimeDisplayWidget::TimeDisplayWidget() :
 	m_firstSeparator(":", this),
 	m_secondSeparator(".", this)
 {
+	int const valueRow = 0;
+	int const labelRow = 1;
+
 	m_gridLayout.setSpacing( 0 );
 	m_gridLayout.setMargin( 0 );
-	m_gridLayout.setRowStretch(0, 1);
-	m_gridLayout.addWidget( &m_firstValueDisplay, 0, 0 );
-	m_gridLayout.addWidget( &m_firstSeparator, 0, 1 );
-	m_gridLayout.addWidget( &m_secondValueDisplay, 0, 2 );
-	m_gridLayout.addWidget( &m_secondSeparator, 0, 3 );
-	m_gridLayout.addWidget( &m_thirdValueDisplay, 0, 4 );
-	m_gridLayout.addWidget( &m_firstLabelDisplay, 1, 0, Qt::AlignRight );
-	m_gridLayout.addWidget( &m_secondLabelDisplay, 1, 2, Qt::AlignRight );
-	m_gridLayout.addWidget( &m_thirdLabelDisplay, 1, 4, Qt::AlignRight );
+	m_gridLayout.setRowStretch(valueRow, 1);
+	m_gridLayout.addWidget( &m_firstValueDisplay, valueRow, 0 );
+	m_gridLayout.addWidget( &m_firstSeparator, valueRow, 1 );
+	m_gridLayout.addWidget( &m_secondValueDisplay, valueRow, 2 );
+	m_gridLayout.addWidget( &m_secondSeparator, valueRow, 3 );
+	m_gridLayout.addWidget( &m_thirdValueDisplay, valueRow, 4 );
+	m_gridLayout.addWidget( &m_firstLabelDisplay, labelRow, 0, Qt::AlignRight );
+	m_gridLayout.addWidget( &m_secondLabelDisplay, labelRow, 2, Qt::AlignRight );
+	m_gridLayout.addWidget( &m_thirdLabelDisplay, labelRow, 4, Qt::AlignRight );
 
 	ToolTip::add( this, tr( "Time units" ) );
 
@@ -67,7 +70,7 @@ TimeDisplayWidget::TimeDisplayWidget() :
 					this, SLOT( updateTime() ) );
 
 	QFont valueFont = m_firstValueDisplay.font();
-	valueFont.setPointSize(18);
+	valueFont.setPointSize(24);
 	m_firstValueDisplay.setFont(valueFont);
 	m_firstSeparator.setFont(valueFont);
 	m_secondValueDisplay.setFont(valueFont);
