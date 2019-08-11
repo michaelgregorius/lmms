@@ -62,7 +62,6 @@ private:
 	void updateLabelsByDisplayMode();
 
 	DisplayMode m_displayMode;
-	QGridLayout m_gridLayout;
 	QLabel      m_firstValueDisplay;
 	QLabel      m_secondValueDisplay;
 	QLabel      m_thirdValueDisplay;

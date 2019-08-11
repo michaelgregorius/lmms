@@ -23,6 +23,7 @@
  */
 
 #include <QMouseEvent>
+#include <QFrame>
 
 #include "TimeDisplayWidget.h"
 #include "GuiApplication.h"
@@ -36,7 +37,6 @@
 TimeDisplayWidget::TimeDisplayWidget() :
 	QWidget(),
 	m_displayMode( MinutesSeconds ),
-	m_gridLayout( this ),
 	m_firstValueDisplay(this),
 	m_secondValueDisplay(this),
 	m_thirdValueDisplay(this),
@@ -46,21 +46,32 @@ TimeDisplayWidget::TimeDisplayWidget() :
 	m_firstSeparator(":", this),
 	m_secondSeparator(".", this)
 {
+	this->setStyleSheet("background-color:black;");
+
+	QFrame * frame = new QFrame(this);
+
+	QGridLayout * frameGridLayout = new QGridLayout(frame);
+	frame->setLayout(frameGridLayout);
+
 	int const valueRow = 0;
 	int const labelRow = 1;
 
-	m_gridLayout.setSpacing( 0 );
-	m_gridLayout.setMargin( 0 );
-	m_gridLayout.setRowStretch(valueRow, 1);
-	m_gridLayout.addWidget( &m_firstValueDisplay, valueRow, 0 );
-	m_gridLayout.addWidget( &m_firstSeparator, valueRow, 1 );
-	m_gridLayout.addWidget( &m_secondValueDisplay, valueRow, 2 );
-	m_gridLayout.addWidget( &m_secondSeparator, valueRow, 3 );
-	m_gridLayout.addWidget( &m_thirdValueDisplay, valueRow, 4 );
-	m_gridLayout.addWidget( &m_firstLabelDisplay, labelRow, 0, Qt::AlignRight );
-	m_gridLayout.addWidget( &m_secondLabelDisplay, labelRow, 2, Qt::AlignRight );
-	m_gridLayout.addWidget( &m_thirdLabelDisplay, labelRow, 4, Qt::AlignRight );
+	frameGridLayout->setSpacing( 0 );
+	frameGridLayout->setMargin( 0 );
+	frameGridLayout->setRowStretch(valueRow, 1);
+	frameGridLayout->addWidget( &m_firstValueDisplay, valueRow, 0 );
+	frameGridLayout->addWidget( &m_firstSeparator, valueRow, 1 );
+	frameGridLayout->addWidget( &m_secondValueDisplay, valueRow, 2 );
+	frameGridLayout->addWidget( &m_secondSeparator, valueRow, 3 );
+	frameGridLayout->addWidget( &m_thirdValueDisplay, valueRow, 4 );
+	frameGridLayout->addWidget( &m_firstLabelDisplay, labelRow, 0, Qt::AlignRight );
+	frameGridLayout->addWidget( &m_secondLabelDisplay, labelRow, 2, Qt::AlignRight );
+	frameGridLayout->addWidget( &m_thirdLabelDisplay, labelRow, 4, Qt::AlignRight );
 
+	QVBoxLayout * vbox = new QVBoxLayout(this);
+	vbox->setMargin(0);
+	vbox->addWidget(frame);
+	this->setLayout(vbox);
 	ToolTip::add( this, tr( "Time units" ) );
 
 	// update labels of LCD spinboxes
