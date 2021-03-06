@@ -47,7 +47,7 @@ public:
 
 	virtual int controlCount()
 	{
-		return 0;
+		return 2;
 	}
 
 	virtual EffectControlDialog* createView()
@@ -58,7 +58,13 @@ public:
 private:
 	WaveAnalyzerEffect* m_effect;
 
+	// Model to start acquiring data for the WaveAnalyzer
+	BoolModel m_startModel;
+	// Model to freeze the current wave in the background
+	BoolModel m_freezeModel;
+
 	friend class WaveAnalyzerEffect;
+	friend class WaveAnalyzerControlDialog;
 };
 
 #endif

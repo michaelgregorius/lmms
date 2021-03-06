@@ -22,12 +22,48 @@
  *
  */
 
+#include <QGridLayout>
+#include <QWidget>
+
 #include "WaveAnalyzerControlDialog.h"
+
+#include "embed.h"
+#include "PixmapButton.h"
 #include "WaveAnalyzerControls.h"
 
 WaveAnalyzerControlDialog::WaveAnalyzerControlDialog(WaveAnalyzerControls* controls) :
 	EffectControlDialog(controls)
 {
+	// Layout to separate controls from the Wave Analyzer
+	QHBoxLayout* mainLayout = new QHBoxLayout;
+	setLayout(mainLayout);
+
+	// Layout for the controls themselves
+	QVBoxLayout* controlLayout = new QVBoxLayout;
+
+	// Start button
+	PixmapButton* startButton = new PixmapButton(this, tr("Start acquiring data"));
+	QPixmap* startOnPixMap = new QPixmap(PLUGIN_NAME::getIconPixmap("play"));
+	QPixmap* startOffPixMap = new QPixmap(PLUGIN_NAME::getIconPixmap("pause"));
+	startButton->setActiveGraphic(*startOnPixMap);
+	startButton->setInactiveGraphic(*startOffPixMap);
+	startButton->setCheckable(true);
+	startButton->setModel(&controls->m_startModel);
+
+	controlLayout->addWidget(startButton);
+
+	// Freeze button
+	PixmapButton* freezeButton = new PixmapButton(this, tr("Freeze current wave"));
+	QPixmap* freezeOnPixMap = new QPixmap(PLUGIN_NAME::getIconPixmap("play"));
+	QPixmap* freezeOffPixMap = new QPixmap(PLUGIN_NAME::getIconPixmap("pause"));
+	freezeButton->setActiveGraphic(*freezeOnPixMap);
+	freezeButton->setInactiveGraphic(*freezeOffPixMap);
+	freezeButton->setCheckable(true);
+	freezeButton->setModel(&controls->m_freezeModel);
+
+	controlLayout->addWidget(freezeButton);
+
+	mainLayout->addLayout(controlLayout);
 }
 
 WaveAnalyzerControlDialog::~WaveAnalyzerControlDialog()

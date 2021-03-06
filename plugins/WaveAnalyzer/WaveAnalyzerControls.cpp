@@ -30,7 +30,9 @@
 
 WaveAnalyzerControls::WaveAnalyzerControls(WaveAnalyzerEffect* effect) :
 	EffectControls(effect),
-	m_effect(effect)
+	m_effect(effect),
+	m_startModel(false, this, tr("Start Acquiring Data")),
+	m_freezeModel(false, this, tr("Freeze current wave"))
 {
 }
 
