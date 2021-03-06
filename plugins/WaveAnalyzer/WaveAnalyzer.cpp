@@ -1,0 +1,67 @@
+/*
+ * WaveAnalyzer.cpp - Definition of WaveAnalyzerEffect class
+ *
+ * Copyright (c) 2020 Ian Caio <iancaio_dev/at/hotmail.com>
+ *
+ * This file is part of LMMS - https://lmms.io
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public
+ * License as published by the Free Software Foundation; either
+ * version 2 of the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public
+ * License along with this program (see COPYING); if not, write to the
+ * Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
+ * Boston, MA 02110-1301 USA.
+ *
+ */
+
+#include "WaveAnalyzer.h"
+
+#include "embed.h"
+#include "lmms_basics.h"
+#include "plugin_export.h"
+
+extern "C" {
+	Plugin::Descriptor PLUGIN_EXPORT WaveAnalyzer_plugin_descriptor = 
+	{
+		STRINGIFY(PLUGIN_NAME),
+		"Wave Analyzer",
+		QT_TRANSLATE_NOOP("PluginBrowser", "A simple oscilloscope effect."),
+		"Ian Caio <iancaio_dev/at/hotmail.com>",
+		0x0112,
+		Plugin::Effect,
+		new PluginPixmapLoader("logo"),
+		nullptr,
+		nullptr
+	};
+}
+
+WaveAnalyzerEffect::WaveAnalyzerEffect(Model* parent, const Plugin::Descriptor::SubPluginFeatures::Key *key) :
+	Effect(&WaveAnalyzer_plugin_descriptor, parent, key),
+	m_controls(this)
+{
+}
+
+WaveAnalyzerEffect::~WaveAnalyzerEffect()
+{
+}
+
+bool WaveAnalyzerEffect::processAudioBuffer(sampleFrame *buffer, const fpp_t frameCount)
+{
+	return isRunning();
+}
+
+extern "C"
+{
+	PLUGIN_EXPORT Plugin * lmms_plugin_main(Model* parent, void* data)
+	{
+		return new WaveAnalyzerEffect(parent, static_cast<const Plugin::Descriptor::SubPluginFeatures::Key *>(data));
+	}
+}
