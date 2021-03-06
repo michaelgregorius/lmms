@@ -1,3 +1,3 @@
 INCLUDE(BuildPlugin)
 
-BUILD_PLUGIN(WaveAnalyzer WaveAnalyzer.cpp WaveAnalyzerControls.cpp WaveAnalyzerControlDialog.cpp MOCFILES WaveAnalyzer.h WaveAnalyzerControls.h WaveAnalyzerControlDialog.h EMBEDDED_RESOURCES *.png)
+BUILD_PLUGIN(WaveAnalyzer WaveAnalyzer.cpp WaveAnalyzerControls.cpp WaveAnalyzerControlDialog.cpp WaveAnalyzerLevelIndicator.cpp MOCFILES WaveAnalyzer.h WaveAnalyzerControls.h WaveAnalyzerControlDialog.h WaveAnalyzerLevelIndicator.h EMBEDDED_RESOURCES *.png)

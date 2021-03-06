@@ -30,7 +30,7 @@
 
 class WaveAnalyzerEffect : public Effect
 {
-	public:
+public:
 	WaveAnalyzerEffect(Model *parent, const Descriptor::SubPluginFeatures::Key *key);
 	virtual ~WaveAnalyzerEffect();
 

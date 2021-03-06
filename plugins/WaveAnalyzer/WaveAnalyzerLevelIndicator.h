@@ -1,5 +1,6 @@
 /*
- * WaveAnalyzerControlDialog.h - Declaration of WaveAnalyzerControlDialog class
+ * WaveAnalyzerLevelIndicator.h - Declaration of
+ * WaveAnalyzerLevelIndicator class
  *
  * Copyright (c) 2020 Ian Caio <iancaio_dev/at/hotmail.com>
  *
@@ -22,22 +23,32 @@
  *
  */
 
-#ifndef WAVEANALYZER_CONTROL_DIALOG_H
-#define WAVEANALYZER_CONTROL_DIALOG_H
+#ifndef WAVEANALYZER_LEVEL_INDICATOR_H
+#define WAVEANALYZER_LEVEL_INDICATOR_H
 
-#include "EffectControlDialog.h"
-#include "WaveAnalyzerLevelIndicator.h"
+#include <QPixmap>
+#include <QWidget>
 
 class WaveAnalyzerControls;
 
-class WaveAnalyzerControlDialog : public EffectControlDialog
+class WaveAnalyzerLevelIndicator : public QWidget
 {
 	Q_OBJECT
 public:
-	WaveAnalyzerControlDialog(WaveAnalyzerControls* controls);
-	virtual ~WaveAnalyzerControlDialog();
+	WaveAnalyzerLevelIndicator(WaveAnalyzerControls* controls, QWidget* parent = nullptr);
+	virtual ~WaveAnalyzerLevelIndicator();
+
+	void paintEvent(QPaintEvent* pe) override;
+	void paintPeaks(QPaintEvent* pe, QPainter & painter);
 private:
-	WaveAnalyzerLevelIndicator* m_levelIndicator;
+	float m_leftPeak;
+	float m_rightPeak;
+	// Limits of the level indicator
+	float m_minPeak;
+	float m_maxPeak;
+
+	QPixmap* m_backgroundPixmap;
+	QPixmap* m_levelsPixmap;
 };
 
 #endif

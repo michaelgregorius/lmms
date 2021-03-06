@@ -34,9 +34,33 @@
 WaveAnalyzerControlDialog::WaveAnalyzerControlDialog(WaveAnalyzerControls* controls) :
 	EffectControlDialog(controls)
 {
-	// Layout to separate controls from the Wave Analyzer
-	QHBoxLayout* mainLayout = new QHBoxLayout;
+	/*  ____________________________________
+	 *  | Level indicator                   |
+	 *  |___________________________________|
+	 *  | C  |                              |
+	 *  | o  |     Oscilloscope             |
+	 *  | n  |                              |
+	 *  | t  |                              |
+	 *  | r  |                              |
+	 *  | o  |                              |
+	 *  | l  |                              |
+	 *  |_s__|______________________________|
+	 */
+
+	// Layout to separate controls and oscilloscope from the top bar
+	QVBoxLayout* mainLayout = new QVBoxLayout;
 	setLayout(mainLayout);
+
+	// Layout for the top bar (level indicator)
+	QHBoxLayout* topBar = new QHBoxLayout;
+
+	// Add level indicator
+	m_levelIndicator = new WaveAnalyzerLevelIndicator(controls, this);
+	topBar->addWidget(m_levelIndicator);
+	mainLayout->addLayout(topBar);
+
+	// Horizontal layout for the controls and oscilloscope
+	QHBoxLayout* bottomLayout = new QHBoxLayout;
 
 	// Layout for the controls themselves
 	QVBoxLayout* controlLayout = new QVBoxLayout;
@@ -63,7 +87,13 @@ WaveAnalyzerControlDialog::WaveAnalyzerControlDialog(WaveAnalyzerControls* contr
 
 	controlLayout->addWidget(freezeButton);
 
-	mainLayout->addLayout(controlLayout);
+	// Layout for the oscilloscope
+	QVBoxLayout* oscilloscopeLayout = new QVBoxLayout;
+
+	bottomLayout->addLayout(controlLayout);
+	bottomLayout->addLayout(oscilloscopeLayout);
+
+	mainLayout->addLayout(bottomLayout);
 }
 
 WaveAnalyzerControlDialog::~WaveAnalyzerControlDialog()
