@@ -55,6 +55,15 @@ public:
 		return new WaveAnalyzerControlDialog(this);
 	}
 
+	inline void setLeftLevel(float l)
+	{
+		m_leftLevel.setValue(l);
+	}
+	inline void setRightLevel(float r)
+	{
+		m_rightLevel.setValue(r);
+	}
+
 private:
 	WaveAnalyzerEffect* m_effect;
 
@@ -63,8 +72,13 @@ private:
 	// Model to freeze the current wave in the background
 	BoolModel m_freezeModel;
 
+	// Current input levels
+	FloatModel m_leftLevel;
+	FloatModel m_rightLevel;
+
 	friend class WaveAnalyzerEffect;
 	friend class WaveAnalyzerControlDialog;
+	friend class WaveAnalyzerLevelIndicator;
 };
 
 #endif

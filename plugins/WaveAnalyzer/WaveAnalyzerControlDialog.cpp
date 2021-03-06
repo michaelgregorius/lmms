@@ -56,6 +56,10 @@ WaveAnalyzerControlDialog::WaveAnalyzerControlDialog(WaveAnalyzerControls* contr
 
 	// Add level indicator
 	m_levelIndicator = new WaveAnalyzerLevelIndicator(controls, this);
+	// Level changes on the controls will trigger updates on the level indicator
+	connect(&controls->m_leftLevel, SIGNAL(dataChanged()), m_levelIndicator, SLOT(update()));
+	connect(&controls->m_rightLevel, SIGNAL(dataChanged()), m_levelIndicator, SLOT(update()));
+
 	topBar->addWidget(m_levelIndicator);
 	mainLayout->addLayout(topBar);
 

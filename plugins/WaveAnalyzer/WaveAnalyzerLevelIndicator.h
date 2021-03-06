@@ -41,8 +41,9 @@ public:
 	void paintEvent(QPaintEvent* pe) override;
 	void paintPeaks(QPaintEvent* pe, QPainter & painter);
 private:
-	float m_leftPeak;
-	float m_rightPeak;
+	// Controls linked to this indicator
+	WaveAnalyzerControls* m_controls;
+
 	// Limits of the level indicator
 	float m_minPeak;
 	float m_maxPeak;

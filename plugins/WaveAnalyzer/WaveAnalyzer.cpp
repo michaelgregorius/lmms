@@ -22,10 +22,13 @@
  *
  */
 
+#include <cmath>
+
 #include "WaveAnalyzer.h"
 
 #include "embed.h"
 #include "lmms_basics.h"
+#include "lmms_math.h"
 #include "plugin_export.h"
 
 extern "C" {
@@ -55,6 +58,26 @@ WaveAnalyzerEffect::~WaveAnalyzerEffect()
 
 bool WaveAnalyzerEffect::processAudioBuffer(sampleFrame *buffer, const fpp_t frameCount)
 {
+	if (!isRunning() && !isEnabled()) { return false; }
+
+	if (m_controls.isViewVisible())
+	{
+		float avgLeft = 0;
+		float avgRight = 0;
+
+		// Get RMS of left and right levels
+		for (fpp_t f = 0; f < frameCount; ++f)
+		{
+			avgLeft += buffer[f][0] * buffer[f][0];
+			avgRight += buffer[f][1] * buffer[f][1];
+		}
+		avgLeft = sqrt(avgLeft / frameCount);
+		avgRight = sqrt(avgRight / frameCount);
+
+		// Update the levels on the control
+		m_controls.setLeftLevel(avgLeft);
+		m_controls.setRightLevel(avgRight);
+	}
 	return isRunning();
 }
 

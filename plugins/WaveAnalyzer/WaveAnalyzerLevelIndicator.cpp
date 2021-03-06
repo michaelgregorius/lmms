@@ -35,8 +35,7 @@
 
 WaveAnalyzerLevelIndicator::WaveAnalyzerLevelIndicator(WaveAnalyzerControls* controls, QWidget* parent) :
 	QWidget(parent),
-	m_leftPeak(0),
-	m_rightPeak(0),
+	m_controls(controls),
 	m_minPeak(0.01f),
 	m_maxPeak(1.00f)
 {
@@ -92,12 +91,15 @@ void WaveAnalyzerLevelIndicator::paintPeaks(QPaintEvent* pe, QPainter & painter)
 		else { return value; }
 	};
 
+	float leftPeak = m_controls->m_leftLevel.value();
+	float rightPeak = m_controls->m_rightLevel.value();
+
 	// Draw levels
-	float leftSize = getProportion(clamp(m_leftPeak, m_minPeak, m_maxPeak)) * width;
+	float leftSize = getProportion(clamp(leftPeak, m_minPeak, m_maxPeak)) * width;
 	QRect leftLevel(0, 0, leftSize, height);
 	painter.drawPixmap(leftLevel, *m_levelsPixmap, leftLevel);
 
-	float rightSize = getProportion(clamp(m_rightPeak, m_minPeak, m_maxPeak)) * width;
+	float rightSize = getProportion(clamp(rightPeak, m_minPeak, m_maxPeak)) * width;
 	QRect rightLevel(0, height, rightSize, height);
 	painter.drawPixmap(rightLevel, *m_levelsPixmap, rightLevel);
 }
