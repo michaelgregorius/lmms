@@ -26,6 +26,8 @@
 #include <QWidget>
 
 #include "WaveAnalyzerControlDialog.h"
+#include "WaveAnalyzerLevelIndicator.h"
+#include "WaveAnalyzerClipIndicator.h"
 
 #include "embed.h"
 #include "PixmapButton.h"
@@ -55,12 +57,19 @@ WaveAnalyzerControlDialog::WaveAnalyzerControlDialog(WaveAnalyzerControls* contr
 	QHBoxLayout* topBar = new QHBoxLayout;
 
 	// Add level indicator
-	m_levelIndicator = new WaveAnalyzerLevelIndicator(controls, this);
+	WaveAnalyzerLevelIndicator* levelIndicator = new WaveAnalyzerLevelIndicator(controls, this);
 	// Level changes on the controls will trigger updates on the level indicator
-	connect(&controls->m_leftLevel, SIGNAL(dataChanged()), m_levelIndicator, SLOT(update()));
-	connect(&controls->m_rightLevel, SIGNAL(dataChanged()), m_levelIndicator, SLOT(update()));
+	connect(&controls->m_leftLevel, SIGNAL(dataChanged()), levelIndicator, SLOT(update()));
+	connect(&controls->m_rightLevel, SIGNAL(dataChanged()), levelIndicator, SLOT(update()));
 
-	topBar->addWidget(m_levelIndicator);
+	// Add clipping indicator
+	WaveAnalyzerClipIndicator* clipIndicator = new WaveAnalyzerClipIndicator(controls, this);
+	// Clipping models will trigger the leds
+	connect(&controls->m_clippedLeft, SIGNAL(dataChanged()), clipIndicator, SLOT(update()));
+	connect(&controls->m_clippedRight, SIGNAL(dataChanged()), clipIndicator, SLOT(update()));
+
+	topBar->addWidget(levelIndicator);
+	topBar->addWidget(clipIndicator);
 	mainLayout->addLayout(topBar);
 
 	// Horizontal layout for the controls and oscilloscope

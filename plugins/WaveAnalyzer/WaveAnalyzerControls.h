@@ -55,15 +55,6 @@ public:
 		return new WaveAnalyzerControlDialog(this);
 	}
 
-	inline void setLeftLevel(float l)
-	{
-		m_leftLevel.setValue(l);
-	}
-	inline void setRightLevel(float r)
-	{
-		m_rightLevel.setValue(r);
-	}
-
 private:
 	WaveAnalyzerEffect* m_effect;
 
@@ -76,9 +67,14 @@ private:
 	FloatModel m_leftLevel;
 	FloatModel m_rightLevel;
 
+	// Has the audio clipped on the left/right?
+	BoolModel m_clippedLeft;
+	BoolModel m_clippedRight;
+
 	friend class WaveAnalyzerEffect;
 	friend class WaveAnalyzerControlDialog;
 	friend class WaveAnalyzerLevelIndicator;
+	friend class WaveAnalyzerClipIndicator;
 };
 
 #endif

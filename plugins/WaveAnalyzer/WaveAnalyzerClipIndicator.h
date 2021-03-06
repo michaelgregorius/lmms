@@ -1,5 +1,6 @@
 /*
- * WaveAnalyzerControls.cpp - Definition of WaveAnalyzerControls class
+ * WaveAnalyzerClipIndicator.h - Declaration of
+ * WaveAnalyzerClipIndicator class
  *
  * Copyright (c) 2020 Ian Caio <iancaio_dev/at/hotmail.com>
  *
@@ -22,32 +23,32 @@
  *
  */
 
-#include <QDomElement>
+#ifndef WAVEANALYZER_CLIP_INDICATOR_H
+#define WAVEANALYZER_CLIP_INDICATOR_H
 
-#include "WaveAnalyzerControls.h"
+#include <QPixmap>
+#include <QWidget>
+#include <QMouseEvent>
 
-#include "WaveAnalyzer.h"
+class WaveAnalyzerControls;
 
-WaveAnalyzerControls::WaveAnalyzerControls(WaveAnalyzerEffect* effect) :
-	EffectControls(effect),
-	m_effect(effect),
-	m_startModel(false, this, tr("Start Acquiring Data")),
-	m_freezeModel(false, this, tr("Freeze current wave")),
-	m_leftLevel(0, 0.0f, 1.0f, 0.01f, this, tr("Left Level")),
-	m_rightLevel(0, 0.0f, 1.0f, 0.01f, this, tr("Right Level")),
-	m_clippedLeft(false, this, tr("Clipped left")),
-	m_clippedRight(false, this, tr("Clipped right"))
+class WaveAnalyzerClipIndicator : public QWidget
 {
-}
+	Q_OBJECT
+public:
+	WaveAnalyzerClipIndicator(WaveAnalyzerControls* controls, QWidget* parent = nullptr);
+	virtual ~WaveAnalyzerClipIndicator();
 
-WaveAnalyzerControls::~WaveAnalyzerControls()
-{
-}
+	void mousePressEvent(QMouseEvent* e) override;
 
-void WaveAnalyzerControls::loadSettings(const QDomElement & _this)
-{
-}
+	void paintEvent(QPaintEvent* pe) override;
+	void paintClipLeds(QPaintEvent* pe, QPainter & painter);
+private:
+	// Controls linked to this indicator
+	WaveAnalyzerControls* m_controls;
 
-void WaveAnalyzerControls::saveSettings(QDomDocument & doc, QDomElement & parent)
-{
-}
+	QPixmap* m_backgroundPixmap;
+	QPixmap* m_clipLedsPixmap;
+};
+
+#endif

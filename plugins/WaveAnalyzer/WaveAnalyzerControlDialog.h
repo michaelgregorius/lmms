@@ -26,7 +26,6 @@
 #define WAVEANALYZER_CONTROL_DIALOG_H
 
 #include "EffectControlDialog.h"
-#include "WaveAnalyzerLevelIndicator.h"
 
 class WaveAnalyzerControls;
 
@@ -36,8 +35,6 @@ class WaveAnalyzerControlDialog : public EffectControlDialog
 public:
 	WaveAnalyzerControlDialog(WaveAnalyzerControls* controls);
 	virtual ~WaveAnalyzerControlDialog();
-private:
-	WaveAnalyzerLevelIndicator* m_levelIndicator;
 };
 
 #endif
