@@ -28,6 +28,7 @@
 #include "WaveAnalyzerControlDialog.h"
 #include "WaveAnalyzerLevelIndicator.h"
 #include "WaveAnalyzerClipIndicator.h"
+#include "WaveAnalyzerOsc.h"
 
 #include "embed.h"
 #include "PixmapButton.h"
@@ -70,6 +71,7 @@ WaveAnalyzerControlDialog::WaveAnalyzerControlDialog(WaveAnalyzerControls* contr
 
 	topBar->addWidget(levelIndicator);
 	topBar->addWidget(clipIndicator);
+	topBar->addStretch();
 	mainLayout->addLayout(topBar);
 
 	// Horizontal layout for the controls and oscilloscope
@@ -102,6 +104,10 @@ WaveAnalyzerControlDialog::WaveAnalyzerControlDialog(WaveAnalyzerControls* contr
 
 	// Layout for the oscilloscope
 	QVBoxLayout* oscilloscopeLayout = new QVBoxLayout;
+
+	// Oscilloscope
+	WaveAnalyzerOsc* osc = new WaveAnalyzerOsc(controls, this);
+	oscilloscopeLayout->addWidget(osc);
 
 	bottomLayout->addLayout(controlLayout);
 	bottomLayout->addLayout(oscilloscopeLayout);

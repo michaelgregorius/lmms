@@ -6,12 +6,14 @@ BUILD_PLUGIN(WaveAnalyzer
 	WaveAnalyzerControlDialog.cpp
 	WaveAnalyzerLevelIndicator.cpp
 	WaveAnalyzerClipIndicator.cpp
+	WaveAnalyzerOsc.cpp
 	MOCFILES
 	WaveAnalyzer.h
 	WaveAnalyzerControls.h
 	WaveAnalyzerControlDialog.h
 	WaveAnalyzerLevelIndicator.h
 	WaveAnalyzerClipIndicator.h
+	WaveAnalyzerOsc.h
 	EMBEDDED_RESOURCES
 	*.png
 )

@@ -81,8 +81,11 @@ bool WaveAnalyzerEffect::processAudioBuffer(sampleFrame *buffer, const fpp_t fra
 				m_controls.m_clippedRight.setValue(true);
 			}
 		}
-		avgLeft = sqrt(avgLeft / frameCount);
-		avgRight = sqrt(avgRight / frameCount);
+		if (frameCount > 0)
+		{
+			avgLeft = sqrt(avgLeft / frameCount);
+			avgRight = sqrt(avgRight / frameCount);
+		}
 
 		// Update the levels on the control
 		m_controls.m_leftLevel.setValue(avgLeft);
