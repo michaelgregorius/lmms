@@ -55,8 +55,8 @@ WaveAnalyzerClipIndicator::~WaveAnalyzerClipIndicator()
 void WaveAnalyzerClipIndicator::mousePressEvent(QMouseEvent* e)
 {
 	// Clicking on the clip indicator resets it
-	m_controls->m_clippedLeft.setValue(false);
-	m_controls->m_clippedRight.setValue(false);	
+	m_controls->m_clippedLeft.setAutomatedValue(false);
+	m_controls->m_clippedRight.setAutomatedValue(false);
 }
 
 void WaveAnalyzerClipIndicator::paintEvent(QPaintEvent* pe)

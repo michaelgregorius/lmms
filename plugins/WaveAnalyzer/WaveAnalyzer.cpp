@@ -74,11 +74,11 @@ bool WaveAnalyzerEffect::processAudioBuffer(sampleFrame *buffer, const fpp_t fra
 			// Check if left or right channels clipped
 			if (buffer[f][0] >= 1 || buffer[f][0] <= -1)
 			{
-				m_controls.m_clippedLeft.setValue(true);
+				m_controls.m_clippedLeft.setAutomatedValue(true);
 			}
 			if (buffer[f][1] >= 1 || buffer[f][1] <= -1)
 			{
-				m_controls.m_clippedRight.setValue(true);
+				m_controls.m_clippedRight.setAutomatedValue(true);
 			}
 		}
 		if (frameCount > 0)
@@ -88,8 +88,8 @@ bool WaveAnalyzerEffect::processAudioBuffer(sampleFrame *buffer, const fpp_t fra
 		}
 
 		// Update the levels on the control
-		m_controls.m_leftLevel.setValue(avgLeft);
-		m_controls.m_rightLevel.setValue(avgRight);
+		m_controls.m_leftLevel.setAutomatedValue(avgLeft);
+		m_controls.m_rightLevel.setAutomatedValue(avgRight);
 	}
 	return isRunning();
 }
