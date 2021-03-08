@@ -23,6 +23,7 @@
  */
 
 #include "WaveAnalyzerOsc.h"
+#include "WaveAnalyzerControls.h"
 
 #include <QColor>
 #include <QPaintEvent>
@@ -43,6 +44,7 @@
 #define clippingLineColor QColor::fromRgb(255, 100, 100)
 #define centerLineColor QColor::fromRgb(100, 100, 100)
 #define labelColor QColor::fromRgb(255, 255, 255)
+#define waveColor QColor::fromRgb(255, 165, 0)
 // Sizes
 #define labelFontSize 12
 
@@ -59,6 +61,9 @@ WaveAnalyzerOsc::WaveAnalyzerOsc(WaveAnalyzerControls* controls, QWidget* parent
 	setMinimumSize(s);
 	setMaximumSize(s);
 	resize(s);
+
+	// Connect signal to repaint when buffer changes
+	connect(m_controls, SIGNAL(bufferChanged()), this, SLOT(repaint()));
 }
 
 WaveAnalyzerOsc::~WaveAnalyzerOsc()
@@ -74,6 +79,9 @@ void WaveAnalyzerOsc::paintEvent(QPaintEvent* pe)
 
 	// Draw labels
 	paintLabels(painter);
+
+	// Draw wave
+	paintWave(painter);
 }
 
 void WaveAnalyzerOsc::paintViewport(QPainter & p)
@@ -151,4 +159,43 @@ void WaveAnalyzerOsc::paintLabels(QPainter & p)
 		topMargin + viewportHeight - clippingMargin + (labelFontSize / 2),
 		"-1"
 	);
+}
+
+void WaveAnalyzerOsc::paintWave(QPainter & p)
+{
+	// Paint the wave shape in the buffer
+	int totalFrames = static_cast<int>(m_controls->m_numberOfFrames.value());
+	int lastFrame = totalFrames - 1;
+	int totalPixels = viewportWidth;
+	int framesPerPixel = totalFrames / totalPixels;
+
+	// References for the drawing
+	int baseY = viewportHeight / 2;
+	int ySpace = (viewportHeight / 2) - clippingMargin;
+
+	// Last point draw
+	int lastX = leftMargin;
+	int lastY = topMargin + baseY;
+
+	p.setPen(waveColor);
+	p.setRenderHint(QPainter::SmoothPixmapTransform, true);
+	p.setRenderHint(QPainter::HighQualityAntialiasing, true);
+	int currentFrame = 0;
+	for (int i = 0; i < totalPixels; ++i)
+	{
+		float value = 0;
+
+		// For now draw the average of left and right channels
+		if (currentFrame <= lastFrame)
+		{
+			value = (m_controls->m_ampBufferL[currentFrame] + m_controls->m_ampBufferR[currentFrame]) / 2;
+			currentFrame += framesPerPixel;
+		}
+
+		int newX = leftMargin + i;
+		int newY = topMargin + baseY - (value * ySpace);
+		p.drawLine(lastX, lastY, newX, newY);
+		lastX = newX;
+		lastY = newY;
+	}
 }

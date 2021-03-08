@@ -25,6 +25,8 @@
 #ifndef WAVEANALYZER_CONTROLS_H
 #define WAVEANALYZER_CONTROLS_H
 
+#define BUFFER_MAX_SIZE 88200
+
 #include "EffectControls.h"
 #include "WaveAnalyzerControlDialog.h"
 
@@ -39,6 +41,8 @@ public:
 
 	virtual void saveSettings(QDomDocument & doc, QDomElement & parent);
 	virtual void loadSettings(const QDomElement & _this);
+
+	void shiftBuffers(int framesCount);
 
 	inline virtual QString nodeName() const
 	{
@@ -55,6 +59,9 @@ public:
 		return new WaveAnalyzerControlDialog(this);
 	}
 
+signals:
+	void bufferChanged();
+
 private:
 	WaveAnalyzerEffect* m_effect;
 
@@ -62,6 +69,9 @@ private:
 	BoolModel m_startModel;
 	// Model to freeze the current wave in the background
 	BoolModel m_freezeModel;
+
+	// Model to set the number of frames that is drawn in the oscilloscope
+	FloatModel m_numberOfFrames;
 
 	// Current input levels
 	FloatModel m_leftLevel;
@@ -71,10 +81,15 @@ private:
 	BoolModel m_clippedLeft;
 	BoolModel m_clippedRight;
 
+	// Actual buffer with the amplitudes
+	float m_ampBufferL[BUFFER_MAX_SIZE];
+	float m_ampBufferR[BUFFER_MAX_SIZE];
+
 	friend class WaveAnalyzerEffect;
 	friend class WaveAnalyzerControlDialog;
 	friend class WaveAnalyzerLevelIndicator;
 	friend class WaveAnalyzerClipIndicator;
+	friend class WaveAnalyzerOsc;
 };
 
 #endif

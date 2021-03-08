@@ -32,6 +32,7 @@
 #include "WaveAnalyzerOsc.h"
 
 #include "embed.h"
+#include "Knob.h"
 #include "PixmapButton.h"
 #include "WaveAnalyzerControls.h"
 
@@ -74,11 +75,17 @@ WaveAnalyzerControlDialog::WaveAnalyzerControlDialog(WaveAnalyzerControls* contr
 	QLabel* title = new QLabel();
 	title->setPixmap(QPixmap(PLUGIN_NAME::getIconPixmap("title")));
 
+	// Adds numberOfFrames Knob
+	Knob* framesKnob = new Knob(knobBright_26);
+	framesKnob->setLabel("Frames");
+	framesKnob->setModel(&controls->m_numberOfFrames);
+
 	topBar->addWidget(levelIndicator);
 	topBar->addWidget(clipIndicator);
 	topBar->addStretch();
 	topBar->addWidget(title);
 	topBar->addStretch();
+	topBar->addWidget(framesKnob);
 	mainLayout->addLayout(topBar);
 
 	// Horizontal layout for the controls and oscilloscope

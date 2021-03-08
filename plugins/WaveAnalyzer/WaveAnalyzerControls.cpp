@@ -33,6 +33,7 @@ WaveAnalyzerControls::WaveAnalyzerControls(WaveAnalyzerEffect* effect) :
 	m_effect(effect),
 	m_startModel(false, this, tr("Start Acquiring Data")),
 	m_freezeModel(false, this, tr("Freeze current wave")),
+	m_numberOfFrames(1024.0f, 512.0f, BUFFER_MAX_SIZE, 1.0f, this, tr("Number of frames")),
 	m_leftLevel(0, 0.0f, 1.0f, 0.01f, this, tr("Left Level")),
 	m_rightLevel(0, 0.0f, 1.0f, 0.01f, this, tr("Right Level")),
 	m_clippedLeft(false, this, tr("Clipped left")),
@@ -42,6 +43,25 @@ WaveAnalyzerControls::WaveAnalyzerControls(WaveAnalyzerEffect* effect) :
 
 WaveAnalyzerControls::~WaveAnalyzerControls()
 {
+}
+
+/* @brief Shifts the buffer to the left by framesCount number of frames
+ * so the new frames can be copied at the right side.
+ * @param Int framesCount number of frames to be shifted
+ */
+void WaveAnalyzerControls::shiftBuffers(int framesCount)
+{
+	int currentBufferSize = static_cast<int>(m_numberOfFrames.value());
+	int lastBufferIndex = currentBufferSize - 1;
+
+	for (int i = 0; i <= lastBufferIndex; ++i)
+	{
+		// If the frame we are shifting is out of bound return
+		if (i + framesCount > lastBufferIndex) { return; }
+		// Else we shift the frames to the beginning of the buffer
+		m_ampBufferL[i] = m_ampBufferL[i + framesCount];
+		m_ampBufferR[i] = m_ampBufferR[i + framesCount];
+	}
 }
 
 void WaveAnalyzerControls::loadSettings(const QDomElement & _this)

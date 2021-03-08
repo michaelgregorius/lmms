@@ -39,6 +39,7 @@ public:
 	void paintEvent(QPaintEvent* pe) override;
 	void paintViewport(QPainter & p);
 	void paintLabels(QPainter & p);
+	void paintWave(QPainter & p);
 private:
 	// Controls linked to this indicator
 	WaveAnalyzerControls* m_controls;

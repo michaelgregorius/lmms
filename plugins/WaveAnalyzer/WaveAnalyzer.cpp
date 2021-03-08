@@ -65,9 +65,21 @@ bool WaveAnalyzerEffect::processAudioBuffer(sampleFrame *buffer, const fpp_t fra
 		float avgLeft = 0;
 		float avgRight = 0;
 
-		// Get RMS of left and right levels
+		// Shift the oscilloscope buffer to fit those new values
+		m_controls.shiftBuffers(frameCount);
+
+		// Get RMS of left and right levels and also write the values to the
+		// oscilloscope buffer
 		for (fpp_t f = 0; f < frameCount; ++f)
 		{
+			// For the oscilloscope buffer
+			int lastBufferIndex = static_cast<int>(m_controls.m_numberOfFrames.value()) - 1;
+			int firstBufferIndex = lastBufferIndex - frameCount - 1;
+
+			m_controls.m_ampBufferL[firstBufferIndex + f] = buffer[f][0];
+			m_controls.m_ampBufferR[firstBufferIndex + f] = buffer[f][1];
+
+			// For the level indicator
 			avgLeft += buffer[f][0] * buffer[f][0];
 			avgRight += buffer[f][1] * buffer[f][1];
 
@@ -86,6 +98,9 @@ bool WaveAnalyzerEffect::processAudioBuffer(sampleFrame *buffer, const fpp_t fra
 			avgLeft = sqrt(avgLeft / frameCount);
 			avgRight = sqrt(avgRight / frameCount);
 		}
+
+		// Emit signal that the buffer has changed
+		m_controls.bufferChanged();
 
 		// Update the levels on the control
 		m_controls.m_leftLevel.setAutomatedValue(avgLeft);
