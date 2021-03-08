@@ -23,6 +23,7 @@
  */
 
 #include <QGridLayout>
+#include <QLabel>
 #include <QWidget>
 
 #include "WaveAnalyzerControlDialog.h"
@@ -69,8 +70,14 @@ WaveAnalyzerControlDialog::WaveAnalyzerControlDialog(WaveAnalyzerControls* contr
 	connect(&controls->m_clippedLeft, SIGNAL(dataChanged()), clipIndicator, SLOT(update()));
 	connect(&controls->m_clippedRight, SIGNAL(dataChanged()), clipIndicator, SLOT(update()));
 
+	// Adds title
+	QLabel* title = new QLabel();
+	title->setPixmap(QPixmap(PLUGIN_NAME::getIconPixmap("title")));
+
 	topBar->addWidget(levelIndicator);
 	topBar->addWidget(clipIndicator);
+	topBar->addStretch();
+	topBar->addWidget(title);
 	topBar->addStretch();
 	mainLayout->addLayout(topBar);
 
