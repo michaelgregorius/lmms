@@ -61,7 +61,7 @@ public:
 	}
 
 signals:
-	void bufferChanged();
+	void bufferChanged(int count);
 
 private:
 	WaveAnalyzerEffect* m_effect;

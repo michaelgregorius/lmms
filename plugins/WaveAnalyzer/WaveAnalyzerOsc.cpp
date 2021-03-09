@@ -46,7 +46,7 @@ WaveAnalyzerOsc::WaveAnalyzerOsc(WaveAnalyzerControls* controls, QWidget* parent
 	m_wave = new WaveAnalyzerWaveform(controls, this);
 
 	// Connect signal to repaint when buffer changes
-	connect(m_controls, SIGNAL(bufferChanged()), m_wave, SLOT(repaint()));
+	connect(m_controls, SIGNAL(bufferChanged(int)), m_wave, SLOT(updatePoints(int)));
 }
 
 WaveAnalyzerOsc::~WaveAnalyzerOsc()
@@ -158,29 +158,31 @@ WaveAnalyzerWaveform::~WaveAnalyzerWaveform()
 {
 }
 
-void WaveAnalyzerWaveform::paintEvent(QPaintEvent* pe)
+void WaveAnalyzerWaveform::updatePoints(int count)
 {
-	QPainter p(this);
-
-	// Paint the wave shape in the buffer
+	int totalPixels = viewportWidth;
 	int totalFrames = static_cast<int>(m_controls->m_numberOfFrames.value());
 	int lastFrame = totalFrames - 1;
-	int totalPixels = viewportWidth;
 	int framesPerPixel = totalFrames / totalPixels;
 
-	// References for the drawing
+	// Shift existing points
+	int pixelsShift = count / framesPerPixel;
+	shiftPoints(pixelsShift);
+
+	// Add new points
+	// References for the points
 	int baseY = viewportHeight / 2;
 	int ySpace = (viewportHeight / 2) - clippingMargin;
 
-	p.setPen(waveColor);
+	// Go to the first altered frame
+	int currentFrame = totalFrames - count;
+	int currentPixel = totalPixels - (count / framesPerPixel);
 
-	int currentFrame = 0;
-	for (int i = 0; i < totalPixels; ++i)
+	for (; currentPixel < totalPixels; ++currentPixel)
 	{
 		float valueL = 0;
 		float valueR = 0;
 
-		// For now draw the average of left and right channels
 		if (currentFrame <= lastFrame)
 		{
 			valueL = m_controls->m_ampBufferL[currentFrame];
@@ -190,11 +192,37 @@ void WaveAnalyzerWaveform::paintEvent(QPaintEvent* pe)
 
 		int leftY = baseY - (valueL * ySpace);
 		int rightY = baseY - (valueR * ySpace);
-		m_pointsL[i] = QPointF(i, leftY);
-		m_pointsR[i] = QPointF(i, rightY);
+		m_pointsL[currentPixel] = QPointF(currentPixel, leftY);
+		m_pointsR[currentPixel] = QPointF(currentPixel, rightY);
 	}
 
+	repaint();
+}
+
+void WaveAnalyzerWaveform::shiftPoints(int count)
+{
+	int size = viewportWidth;
+	int lastIndex = size - 1;
+
+	for (int i = 0; i < size; ++i)
+	{
+		// If point being shifted is out of bounds return
+		if (i + count > lastIndex) { return; }
+		// Else we shift the points
+		m_pointsL[i] = QPointF(i, m_pointsL[i + count].y());
+		m_pointsR[i] = QPointF(i, m_pointsR[i + count].y());
+	}
+}
+
+void WaveAnalyzerWaveform::paintEvent(QPaintEvent* pe)
+{
+	QPainter p(this);
+
+	// Paint the wave shape in the buffer
+	int totalPixels = viewportWidth;
+
 	p.setRenderHint(QPainter::Antialiasing);
+	p.setPen(waveColor);
 	p.drawPolyline(m_pointsL, totalPixels);
 	p.drawPolyline(m_pointsR, totalPixels);
 }

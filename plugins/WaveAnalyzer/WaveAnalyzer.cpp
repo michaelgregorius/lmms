@@ -100,7 +100,7 @@ bool WaveAnalyzerEffect::processAudioBuffer(sampleFrame *buffer, const fpp_t fra
 		}
 
 		// Emit signal that the buffer has changed
-		m_controls.bufferChanged();
+		m_controls.bufferChanged(frameCount);
 
 		// Update the levels on the control
 		m_controls.m_leftLevel.setAutomatedValue(avgLeft);

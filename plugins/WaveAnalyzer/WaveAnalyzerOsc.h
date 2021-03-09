@@ -55,7 +55,11 @@ public:
 	WaveAnalyzerWaveform(WaveAnalyzerControls* controls, QWidget* parent = nullptr);
 	virtual ~WaveAnalyzerWaveform();
 	void paintEvent(QPaintEvent* pe) override;
+public slots:
+	void updatePoints(int count);
 private:
+	void shiftPoints(int count);
+
 	// Controls linked to this indicator
 	WaveAnalyzerControls* m_controls;
 
