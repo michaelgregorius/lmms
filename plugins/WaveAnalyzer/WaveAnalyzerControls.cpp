@@ -34,11 +34,16 @@ WaveAnalyzerControls::WaveAnalyzerControls(WaveAnalyzerEffect* effect) :
 	m_startModel(false, this, tr("Start Acquiring Data")),
 	m_freezeModel(false, this, tr("Freeze current wave")),
 	m_numberOfFrames(1024.0f, 512.0f, BUFFER_MAX_SIZE, 1.0f, this, tr("Number of frames")),
+	m_drawingMode(),
 	m_leftLevel(0, 0.0f, 1.0f, 0.01f, this, tr("Left Level")),
 	m_rightLevel(0, 0.0f, 1.0f, 0.01f, this, tr("Right Level")),
 	m_clippedLeft(false, this, tr("Clipped left")),
 	m_clippedRight(false, this, tr("Clipped right"))
 {
+	// Add the drawing modes
+	m_drawingMode.addItem(tr("Raw"));
+	m_drawingMode.addItem(tr("Smoothed Bezier"));
+	m_drawingMode.setValue(0);
 }
 
 WaveAnalyzerControls::~WaveAnalyzerControls()

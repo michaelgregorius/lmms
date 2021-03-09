@@ -31,6 +31,7 @@
 #include "WaveAnalyzerClipIndicator.h"
 #include "WaveAnalyzerOsc.h"
 
+#include "ComboBox.h"
 #include "embed.h"
 #include "Knob.h"
 #include "PixmapButton.h"
@@ -80,11 +81,25 @@ WaveAnalyzerControlDialog::WaveAnalyzerControlDialog(WaveAnalyzerControls* contr
 	framesKnob->setLabel("Frames");
 	framesKnob->setModel(&controls->m_numberOfFrames);
 
+	// Adds drawing mode Combobox + Label
+	QVBoxLayout* comboBoxLayout = new QVBoxLayout;
+
+	QLabel* drawingModeTitle = new QLabel("Drawing mode:");
+
+	ComboBox* drawingMode = new ComboBox(this);
+	drawingMode->setModel(&controls->m_drawingMode);
+	drawingMode->setFixedSize(130, ComboBox::DEFAULT_HEIGHT);
+	drawingMode->setToolTip(tr("Drawing mode"));
+
+	comboBoxLayout->addWidget(drawingModeTitle);
+	comboBoxLayout->addWidget(drawingMode);
+
 	topBar->addWidget(levelIndicator);
 	topBar->addWidget(clipIndicator);
 	topBar->addStretch();
 	topBar->addWidget(title);
 	topBar->addStretch();
+	topBar->addLayout(comboBoxLayout);
 	topBar->addWidget(framesKnob);
 	mainLayout->addLayout(topBar);
 

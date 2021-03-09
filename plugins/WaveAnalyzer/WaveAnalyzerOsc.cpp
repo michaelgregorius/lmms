@@ -31,7 +31,7 @@
 
 // CONSTANTS:
 // Margins
-#define viewportWidth 400
+#define viewportWidth 500
 #define viewportHeight 200
 #define leftMargin 40
 #define rightMargin 10

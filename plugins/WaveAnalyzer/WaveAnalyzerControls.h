@@ -27,6 +27,7 @@
 
 #define BUFFER_MAX_SIZE 88200
 
+#include "ComboBoxModel.h"
 #include "EffectControls.h"
 #include "WaveAnalyzerControlDialog.h"
 
@@ -72,6 +73,9 @@ private:
 
 	// Model to set the number of frames that is drawn in the oscilloscope
 	FloatModel m_numberOfFrames;
+
+	// Model to set the drawing mode
+	ComboBoxModel m_drawingMode;
 
 	// Current input levels
 	FloatModel m_leftLevel;
