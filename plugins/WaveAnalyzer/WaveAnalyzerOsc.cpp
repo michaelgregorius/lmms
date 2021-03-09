@@ -62,8 +62,10 @@ WaveAnalyzerOsc::WaveAnalyzerOsc(WaveAnalyzerControls* controls, QWidget* parent
 	setMaximumSize(s);
 	resize(s);
 
+	m_wave = new WaveAnalyzerWaveform(controls, this);
+
 	// Connect signal to repaint when buffer changes
-	connect(m_controls, SIGNAL(bufferChanged()), this, SLOT(repaint()));
+	connect(m_controls, SIGNAL(bufferChanged()), m_wave, SLOT(repaint()));
 }
 
 WaveAnalyzerOsc::~WaveAnalyzerOsc()
@@ -80,8 +82,7 @@ void WaveAnalyzerOsc::paintEvent(QPaintEvent* pe)
 	// Draw labels
 	paintLabels(painter);
 
-	// Draw wave
-	paintWave(painter);
+	// Waveform is drawn by WaveAnalyzerWaveform
 }
 
 void WaveAnalyzerOsc::paintViewport(QPainter & p)
@@ -161,8 +162,25 @@ void WaveAnalyzerOsc::paintLabels(QPainter & p)
 	);
 }
 
-void WaveAnalyzerOsc::paintWave(QPainter & p)
+WaveAnalyzerWaveform::WaveAnalyzerWaveform(WaveAnalyzerControls* controls, QWidget* parent) :
+	QWidget(parent),
+	m_controls(controls)
 {
+	move(leftMargin, topMargin);
+	QSize s(viewportWidth, viewportHeight);
+	setMinimumSize(s);
+	setMaximumSize(s);
+	resize(s);
+}
+
+WaveAnalyzerWaveform::~WaveAnalyzerWaveform()
+{
+}
+
+void WaveAnalyzerWaveform::paintEvent(QPaintEvent* pe)
+{
+	QPainter p(this);
+
 	// Paint the wave shape in the buffer
 	int totalFrames = static_cast<int>(m_controls->m_numberOfFrames.value());
 	int lastFrame = totalFrames - 1;
@@ -174,8 +192,8 @@ void WaveAnalyzerOsc::paintWave(QPainter & p)
 	int ySpace = (viewportHeight / 2) - clippingMargin;
 
 	// Last point draw
-	int lastX = leftMargin;
-	int lastY = topMargin + baseY;
+	int lastX = 0;
+	int lastY = baseY;
 
 	p.setPen(waveColor);
 	p.setRenderHint(QPainter::SmoothPixmapTransform, true);
@@ -192,8 +210,8 @@ void WaveAnalyzerOsc::paintWave(QPainter & p)
 			currentFrame += framesPerPixel;
 		}
 
-		int newX = leftMargin + i;
-		int newY = topMargin + baseY - (value * ySpace);
+		int newX = i;
+		int newY = baseY - (value * ySpace);
 		p.drawLine(lastX, lastY, newX, newY);
 		lastX = newX;
 		lastY = newY;

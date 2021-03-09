@@ -94,6 +94,7 @@ private:
 	friend class WaveAnalyzerLevelIndicator;
 	friend class WaveAnalyzerClipIndicator;
 	friend class WaveAnalyzerOsc;
+	friend class WaveAnalyzerWaveform;
 };
 
 #endif

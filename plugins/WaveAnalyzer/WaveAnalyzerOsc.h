@@ -29,6 +29,18 @@
 
 class WaveAnalyzerControls;
 
+class WaveAnalyzerWaveform : public QWidget
+{
+	Q_OBJECT
+public:
+	WaveAnalyzerWaveform(WaveAnalyzerControls* controls, QWidget* parent = nullptr);
+	virtual ~WaveAnalyzerWaveform();
+	void paintEvent(QPaintEvent* pe) override;
+private:
+	// Controls linked to this indicator
+	WaveAnalyzerControls* m_controls;
+};
+
 class WaveAnalyzerOsc : public QWidget
 {
 	Q_OBJECT
@@ -41,6 +53,9 @@ public:
 	void paintLabels(QPainter & p);
 	void paintWave(QPainter & p);
 private:
+	// Waveform itself (drawed separately for performance)
+	WaveAnalyzerWaveform* m_wave;
+
 	// Controls linked to this indicator
 	WaveAnalyzerControls* m_controls;
 };
