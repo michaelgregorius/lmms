@@ -29,25 +29,6 @@
 #include <QPaintEvent>
 #include <QPainter>
 
-// CONSTANTS:
-// Margins
-#define viewportWidth 500
-#define viewportHeight 200
-#define leftMargin 40
-#define rightMargin 10
-#define topMargin 15
-#define bottomMargin 10
-#define clippingMargin 30 // The margin between the clipping line and viewport top/bottom
-// Colors
-#define borderColor QColor::fromRgb(100, 100, 100)
-#define backgroundColor QColor::fromRgb(0, 0, 0)
-#define clippingLineColor QColor::fromRgb(255, 100, 100)
-#define centerLineColor QColor::fromRgb(100, 100, 100)
-#define labelColor QColor::fromRgb(255, 255, 255)
-#define waveColor QColor::fromRgb(255, 165, 0)
-// Sizes
-#define labelFontSize 12
-
 WaveAnalyzerOsc::WaveAnalyzerOsc(WaveAnalyzerControls* controls, QWidget* parent) :
 	QWidget(parent),
 	m_controls(controls)
@@ -191,29 +172,29 @@ void WaveAnalyzerWaveform::paintEvent(QPaintEvent* pe)
 	int baseY = viewportHeight / 2;
 	int ySpace = (viewportHeight / 2) - clippingMargin;
 
-	// Last point draw
-	int lastX = 0;
-	int lastY = baseY;
-
 	p.setPen(waveColor);
-	p.setRenderHint(QPainter::SmoothPixmapTransform, true);
-	p.setRenderHint(QPainter::HighQualityAntialiasing, true);
+
 	int currentFrame = 0;
 	for (int i = 0; i < totalPixels; ++i)
 	{
-		float value = 0;
+		float valueL = 0;
+		float valueR = 0;
 
 		// For now draw the average of left and right channels
 		if (currentFrame <= lastFrame)
 		{
-			value = (m_controls->m_ampBufferL[currentFrame] + m_controls->m_ampBufferR[currentFrame]) / 2;
+			valueL = m_controls->m_ampBufferL[currentFrame];
+			valueR = m_controls->m_ampBufferR[currentFrame];
 			currentFrame += framesPerPixel;
 		}
 
-		int newX = i;
-		int newY = baseY - (value * ySpace);
-		p.drawLine(lastX, lastY, newX, newY);
-		lastX = newX;
-		lastY = newY;
+		int leftY = baseY - (valueL * ySpace);
+		int rightY = baseY - (valueR * ySpace);
+		m_pointsL[i] = QPointF(i, leftY);
+		m_pointsR[i] = QPointF(i, rightY);
 	}
+
+	p.setRenderHint(QPainter::Antialiasing);
+	p.drawPolyline(m_pointsL, totalPixels);
+	p.drawPolyline(m_pointsR, totalPixels);
 }

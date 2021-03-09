@@ -68,14 +68,14 @@ bool WaveAnalyzerEffect::processAudioBuffer(sampleFrame *buffer, const fpp_t fra
 		// Shift the oscilloscope buffer to fit those new values
 		m_controls.shiftBuffers(frameCount);
 
+		// For the oscilloscope buffer
+		int lastBufferIndex = static_cast<int>(m_controls.m_numberOfFrames.value()) - 1;
+		int firstBufferIndex = lastBufferIndex - (frameCount - 1);
+
 		// Get RMS of left and right levels and also write the values to the
 		// oscilloscope buffer
 		for (fpp_t f = 0; f < frameCount; ++f)
 		{
-			// For the oscilloscope buffer
-			int lastBufferIndex = static_cast<int>(m_controls.m_numberOfFrames.value()) - 1;
-			int firstBufferIndex = lastBufferIndex - frameCount - 1;
-
 			m_controls.m_ampBufferL[firstBufferIndex + f] = buffer[f][0];
 			m_controls.m_ampBufferR[firstBufferIndex + f] = buffer[f][1];
 

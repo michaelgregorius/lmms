@@ -27,6 +27,25 @@
 
 #include <QWidget>
 
+// CONSTANTS:
+// Margins
+#define viewportWidth 500
+#define viewportHeight 200
+#define leftMargin 40
+#define rightMargin 10
+#define topMargin 15
+#define bottomMargin 10
+#define clippingMargin 30 // The margin between the clipping line and viewport top/bottom
+// Colors
+#define borderColor QColor::fromRgb(100, 100, 100)
+#define backgroundColor QColor::fromRgb(0, 0, 0)
+#define clippingLineColor QColor::fromRgb(255, 100, 100)
+#define centerLineColor QColor::fromRgb(100, 100, 100)
+#define labelColor QColor::fromRgb(255, 255, 255)
+#define waveColor QColor::fromRgb(255, 165, 0)
+// Sizes
+#define labelFontSize 12
+
 class WaveAnalyzerControls;
 
 class WaveAnalyzerWaveform : public QWidget
@@ -39,6 +58,10 @@ public:
 private:
 	// Controls linked to this indicator
 	WaveAnalyzerControls* m_controls;
+
+	// The points representing the sample values of left and right
+	QPointF m_pointsL[viewportWidth];
+	QPointF m_pointsR[viewportWidth];
 };
 
 class WaveAnalyzerOsc : public QWidget
