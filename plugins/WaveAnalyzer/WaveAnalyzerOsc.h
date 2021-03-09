@@ -64,8 +64,8 @@ private:
 	WaveAnalyzerControls* m_controls;
 
 	// The points representing the sample values of left and right
-	QPointF m_pointsL[viewportWidth];
-	QPointF m_pointsR[viewportWidth];
+	QPoint m_pointsL[viewportWidth];
+	QPoint m_pointsR[viewportWidth];
 };
 
 class WaveAnalyzerOsc : public QWidget

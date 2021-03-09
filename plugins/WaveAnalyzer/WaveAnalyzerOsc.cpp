@@ -192,8 +192,8 @@ void WaveAnalyzerWaveform::updatePoints(int count)
 
 		int leftY = baseY - (valueL * ySpace);
 		int rightY = baseY - (valueR * ySpace);
-		m_pointsL[currentPixel] = QPointF(currentPixel, leftY);
-		m_pointsR[currentPixel] = QPointF(currentPixel, rightY);
+		m_pointsL[currentPixel] = QPoint(currentPixel, leftY);
+		m_pointsR[currentPixel] = QPoint(currentPixel, rightY);
 	}
 
 	repaint();
@@ -209,8 +209,8 @@ void WaveAnalyzerWaveform::shiftPoints(int count)
 		// If point being shifted is out of bounds return
 		if (i + count > lastIndex) { return; }
 		// Else we shift the points
-		m_pointsL[i] = QPointF(i, m_pointsL[i + count].y());
-		m_pointsR[i] = QPointF(i, m_pointsR[i + count].y());
+		m_pointsL[i] = QPoint(i, m_pointsL[i + count].y());
+		m_pointsR[i] = QPoint(i, m_pointsR[i + count].y());
 	}
 }
 
@@ -218,11 +218,25 @@ void WaveAnalyzerWaveform::paintEvent(QPaintEvent* pe)
 {
 	QPainter p(this);
 
-	// Paint the wave shape in the buffer
-	int totalPixels = viewportWidth;
-
 	p.setRenderHint(QPainter::Antialiasing);
 	p.setPen(waveColor);
-	p.drawPolyline(m_pointsL, totalPixels);
-	p.drawPolyline(m_pointsR, totalPixels);
+
+	switch(m_controls->m_drawingMode.value())
+	{
+		// Raw mode
+		case 0:
+		{
+			p.drawPolyline(m_pointsL, viewportWidth);
+			p.drawPolyline(m_pointsR, viewportWidth);
+			break;
+		}
+		// Smoothed bezier
+		case 1:
+		{
+			break;
+		}
+		default:
+			qWarning("WaveAnalyzer: Invalid drawing mode");
+			return;
+	}
 }
