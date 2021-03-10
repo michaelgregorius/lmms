@@ -25,9 +25,12 @@
 #include "WaveAnalyzerOsc.h"
 #include "WaveAnalyzerControls.h"
 
+#include <algorithm>
+
 #include <QColor>
 #include <QPaintEvent>
 #include <QPainter>
+#include <QPainterPath>
 
 WaveAnalyzerOsc::WaveAnalyzerOsc(WaveAnalyzerControls* controls, QWidget* parent) :
 	QWidget(parent),
@@ -163,7 +166,7 @@ void WaveAnalyzerWaveform::updatePoints(int count)
 	int totalPixels = viewportWidth;
 	int totalFrames = static_cast<int>(m_controls->m_numberOfFrames.value());
 	int lastFrame = totalFrames - 1;
-	int framesPerPixel = totalFrames / totalPixels;
+	int framesPerPixel = std::max(totalFrames / totalPixels, 1);
 
 	// Shift existing points
 	int pixelsShift = count / framesPerPixel;
@@ -214,6 +217,82 @@ void WaveAnalyzerWaveform::shiftPoints(int count)
 	}
 }
 
+QPainterPath* WaveAnalyzerWaveform::generateSmoothedPathL()
+{
+	QPainterPath* p = new QPainterPath();
+
+	// si -> c1 -> c2 -> sn
+	// S0 is the first point itself
+	QPointF si(m_pointsL[0].x(), m_pointsL[0].y());
+	QPointF c1;
+	QPointF c2;
+	QPointF sn;
+
+	p->moveTo(si);
+
+	int lastP = viewportWidth - 1;
+
+	for (int i = 0; i < lastP; ++i)
+	{
+		// Calculate c1, c2 and sn
+		c1 = (2 * m_pointsL[i] / 3) + (m_pointsL[i + 1] / 3);
+		c2 = (m_pointsL[i] / 3) + (2 * m_pointsL[i + 1] / 3);
+		// sn will be the last point on the last bezier or be calculated
+		if (i == lastP - 1)
+		{
+			sn = m_pointsL[lastP];
+		}
+		else
+		{
+			// The next sn depends on the c1 of the next bezier curve
+			QPointF nc1 = (2 * m_pointsL[i + 1] / 3) + (m_pointsL[i + 2] / 3);
+			sn = c2 / 2 + nc1 / 2;
+		}
+		p->cubicTo(c1, c2, sn);
+		// For next iteration
+		si = sn;
+	}
+	return p;
+}
+
+QPainterPath* WaveAnalyzerWaveform::generateSmoothedPathR()
+{
+	QPainterPath* p = new QPainterPath();
+
+	// si -> c1 -> c2 -> sn
+	// S0 is the first point itself
+	QPointF si(m_pointsR[0].x(), m_pointsR[0].y());
+	QPointF c1;
+	QPointF c2;
+	QPointF sn;
+
+	p->moveTo(si);
+
+	int lastP = viewportWidth - 1;
+
+	for (int i = 0; i < lastP; ++i)
+	{
+		// Calculate c1, c2 and sn
+		c1 = (2 * m_pointsR[i] / 3) + (m_pointsR[i + 1] / 3);
+		c2 = (m_pointsR[i] / 3) + (2 * m_pointsR[i + 1] / 3);
+		// sn will be the last point on the last bezier or be calculated
+		if (i == lastP - 1)
+		{
+			sn = m_pointsR[lastP];
+		}
+		else
+		{
+			// The next sn depends on the c1 of the next bezier curve
+			QPointF nc1 = (2 * m_pointsR[i + 1] / 3) + (m_pointsR[i + 2] / 3);
+			sn = c2 / 2 + nc1 / 2;
+		}
+		p->cubicTo(c1, c2, sn);
+		// For next iteration
+		si = sn;
+	}
+	return p;
+}
+
 void WaveAnalyzerWaveform::paintEvent(QPaintEvent* pe)
 {
 	QPainter p(this);
@@ -233,6 +312,13 @@ void WaveAnalyzerWaveform::paintEvent(QPaintEvent* pe)
 		// Smoothed bezier
 		case 1:
 		{
+			QPainterPath* path;
+			path = generateSmoothedPathL();
+			p.drawPath(*path);
+			delete path;
+			path = generateSmoothedPathR();
+			p.drawPath(*path);
+			delete path;
 			break;
 		}
 		default:

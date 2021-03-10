@@ -26,6 +26,7 @@
 #define WAVEANALYZER_OSC_H
 
 #include <QWidget>
+#include <QPainterPath>
 
 // CONSTANTS:
 // Margins
@@ -58,6 +59,8 @@ public:
 public slots:
 	void updatePoints(int count);
 private:
+	QPainterPath* generateSmoothedPathL();
+	QPainterPath* generateSmoothedPathR();
 	void shiftPoints(int count);
 
 	// Controls linked to this indicator
