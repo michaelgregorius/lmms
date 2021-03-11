@@ -128,11 +128,6 @@ void WaveAnalyzerOsc::paintLabels(QPainter & p)
 	p.setFont(font);
 
 	p.drawText(
-		0,
-		topMargin + (labelFontSize / 2),
-		"Amp"
-	);
-	p.drawText(
 		leftMargin / 2,
 		topMargin + clippingMargin + (labelFontSize / 2),
 		"1"

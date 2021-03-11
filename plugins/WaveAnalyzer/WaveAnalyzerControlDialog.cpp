@@ -41,24 +41,64 @@ WaveAnalyzerControlDialog::WaveAnalyzerControlDialog(WaveAnalyzerControls* contr
 	EffectControlDialog(controls)
 {
 	/*  ____________________________________
-	 *  | Level indicator                   |
+	 *  | Controls      Level indicator     |
 	 *  |___________________________________|
-	 *  | C  |                              |
-	 *  | o  |     Oscilloscope             |
-	 *  | n  |                              |
-	 *  | t  |                              |
-	 *  | r  |                              |
-	 *  | o  |                              |
-	 *  | l  |                              |
-	 *  |_s__|______________________________|
+	 *  |                                   |
+	 *  |          Oscilloscope             |
+	 *  |                                   |
+	 *  |                                   |
+	 *  |                                   |
+	 *  |                                   |
+	 *  |                                   |
+	 *  |___________________________________|
 	 */
 
-	// Layout to separate controls and oscilloscope from the top bar
+	// Layout to separate oscilloscope from the top bar
 	QVBoxLayout* mainLayout = new QVBoxLayout;
 	setLayout(mainLayout);
 
-	// Layout for the top bar (level indicator)
+	// Layout for the top bar (controls + level indicator)
 	QHBoxLayout* topBar = new QHBoxLayout;
+
+	// Start button
+	PixmapButton* startButton = new PixmapButton(this, tr("Start acquiring data"));
+	QPixmap* startOnPixMap = new QPixmap(PLUGIN_NAME::getIconPixmap("play"));
+	QPixmap* startOffPixMap = new QPixmap(PLUGIN_NAME::getIconPixmap("pause"));
+	startButton->setActiveGraphic(*startOnPixMap);
+	startButton->setInactiveGraphic(*startOffPixMap);
+	startButton->setCheckable(true);
+	startButton->setModel(&controls->m_startModel);
+
+	// Snapshot button
+	PixmapButton* snapshotButton = new PixmapButton(this, tr("Snapshot current wave"));
+	QPixmap* snapshotOnPixMap = new QPixmap(PLUGIN_NAME::getIconPixmap("snapshotOn"));
+	QPixmap* snapshotOffPixMap = new QPixmap(PLUGIN_NAME::getIconPixmap("snapshotOff"));
+	snapshotButton->setActiveGraphic(*snapshotOnPixMap);
+	snapshotButton->setInactiveGraphic(*snapshotOffPixMap);
+	snapshotButton->setCheckable(true);
+	snapshotButton->setModel(&controls->m_snapshotModel);
+
+	// Adds drawing mode Combobox + Label
+	QVBoxLayout* comboBoxLayout = new QVBoxLayout;
+
+	QLabel* drawingModeTitle = new QLabel("Drawing mode:");
+
+	ComboBox* drawingMode = new ComboBox(this);
+	drawingMode->setModel(&controls->m_drawingMode);
+	drawingMode->setFixedSize(130, ComboBox::DEFAULT_HEIGHT);
+	drawingMode->setToolTip(tr("Drawing mode"));
+
+	comboBoxLayout->setSpacing(0);
+
+	comboBoxLayout->addWidget(drawingModeTitle);
+	comboBoxLayout->addWidget(drawingMode);
+
+	// Adds numberOfFrames Knob
+	Knob* framesKnob = new Knob(knobBright_26);
+	framesKnob->setLabel("Frames");
+	framesKnob->setModel(&controls->m_numberOfFrames);
+
+	QHBoxLayout* levelIndicatorLayout = new QHBoxLayout;
 
 	// Add level indicator
 	WaveAnalyzerLevelIndicator* levelIndicator = new WaveAnalyzerLevelIndicator(controls, this);
@@ -72,75 +112,29 @@ WaveAnalyzerControlDialog::WaveAnalyzerControlDialog(WaveAnalyzerControls* contr
 	connect(&controls->m_clippedLeft, SIGNAL(dataChanged()), clipIndicator, SLOT(update()));
 	connect(&controls->m_clippedRight, SIGNAL(dataChanged()), clipIndicator, SLOT(update()));
 
-	// Adds title
-	QLabel* title = new QLabel();
-	title->setPixmap(QPixmap(PLUGIN_NAME::getIconPixmap("title")));
+	levelIndicatorLayout->setSpacing(0);
+	levelIndicatorLayout->addWidget(levelIndicator);
+	levelIndicatorLayout->addWidget(clipIndicator);
 
-	// Adds numberOfFrames Knob
-	Knob* framesKnob = new Knob(knobBright_26);
-	framesKnob->setLabel("Frames");
-	framesKnob->setModel(&controls->m_numberOfFrames);
+	topBar->setContentsMargins(20, 5, 20, 5);
+	topBar->setSpacing(20);
 
-	// Adds drawing mode Combobox + Label
-	QVBoxLayout* comboBoxLayout = new QVBoxLayout;
-
-	QLabel* drawingModeTitle = new QLabel("Drawing mode:");
-
-	ComboBox* drawingMode = new ComboBox(this);
-	drawingMode->setModel(&controls->m_drawingMode);
-	drawingMode->setFixedSize(130, ComboBox::DEFAULT_HEIGHT);
-	drawingMode->setToolTip(tr("Drawing mode"));
-
-	comboBoxLayout->addWidget(drawingModeTitle);
-	comboBoxLayout->addWidget(drawingMode);
-
-	topBar->addWidget(levelIndicator);
-	topBar->addWidget(clipIndicator);
-	topBar->addStretch();
-	topBar->addWidget(title);
-	topBar->addStretch();
+	topBar->addWidget(startButton);
+	topBar->addWidget(snapshotButton);
 	topBar->addLayout(comboBoxLayout);
 	topBar->addWidget(framesKnob);
-	mainLayout->addLayout(topBar);
+	topBar->addStretch();
+	topBar->addLayout(levelIndicatorLayout);
 
-	// Horizontal layout for the controls and oscilloscope
+	// Horizontal layout for the oscilloscope
 	QHBoxLayout* bottomLayout = new QHBoxLayout;
-
-	// Layout for the controls themselves
-	QVBoxLayout* controlLayout = new QVBoxLayout;
-
-	// Start button
-	PixmapButton* startButton = new PixmapButton(this, tr("Start acquiring data"));
-	QPixmap* startOnPixMap = new QPixmap(PLUGIN_NAME::getIconPixmap("play"));
-	QPixmap* startOffPixMap = new QPixmap(PLUGIN_NAME::getIconPixmap("pause"));
-	startButton->setActiveGraphic(*startOnPixMap);
-	startButton->setInactiveGraphic(*startOffPixMap);
-	startButton->setCheckable(true);
-	startButton->setModel(&controls->m_startModel);
-
-	controlLayout->addWidget(startButton);
-
-	// Snapshot button
-	PixmapButton* snapshotButton = new PixmapButton(this, tr("Snapshot current wave"));
-	QPixmap* snapshotOnPixMap = new QPixmap(PLUGIN_NAME::getIconPixmap("play"));
-	QPixmap* snapshotOffPixMap = new QPixmap(PLUGIN_NAME::getIconPixmap("pause"));
-	snapshotButton->setActiveGraphic(*snapshotOnPixMap);
-	snapshotButton->setInactiveGraphic(*snapshotOffPixMap);
-	snapshotButton->setCheckable(true);
-	snapshotButton->setModel(&controls->m_snapshotModel);
-
-	controlLayout->addWidget(snapshotButton);
-
-	// Layout for the oscilloscope
-	QVBoxLayout* oscilloscopeLayout = new QVBoxLayout;
 
 	// Oscilloscope
 	WaveAnalyzerOsc* osc = new WaveAnalyzerOsc(controls, this);
-	oscilloscopeLayout->addWidget(osc);
 
-	bottomLayout->addLayout(controlLayout);
-	bottomLayout->addLayout(oscilloscopeLayout);
+	bottomLayout->addWidget(osc);
 
+	mainLayout->addLayout(topBar);
 	mainLayout->addLayout(bottomLayout);
 }
 

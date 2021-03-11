@@ -32,7 +32,7 @@
 // Margins
 #define viewportWidth 500
 #define viewportHeight 200
-#define leftMargin 40
+#define leftMargin 25
 #define rightMargin 10
 #define topMargin 15
 #define bottomMargin 10
