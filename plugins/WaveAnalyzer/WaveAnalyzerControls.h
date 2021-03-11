@@ -68,8 +68,8 @@ private:
 
 	// Model to start acquiring data for the WaveAnalyzer
 	BoolModel m_startModel;
-	// Model to freeze the current wave in the background
-	BoolModel m_freezeModel;
+	// Model to snapshot the current wave in the background
+	BoolModel m_snapshotModel;
 
 	// Model to set the number of frames that is drawn in the oscilloscope
 	FloatModel m_numberOfFrames;

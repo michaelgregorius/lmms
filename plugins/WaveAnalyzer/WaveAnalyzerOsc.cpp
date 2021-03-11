@@ -52,7 +52,7 @@ WaveAnalyzerOsc::WaveAnalyzerOsc(WaveAnalyzerControls* controls, QWidget* parent
 	connect(m_controls, SIGNAL(bufferChanged(int)), m_wave, SLOT(updatePoints(int)));
 
 	// Connect signal to update frozen waveform points when button is clicked
-	connect(&m_controls->m_freezeModel, SIGNAL(dataChanged()), m_wave, SLOT(updateFrozenPoints()));
+	connect(&m_controls->m_snapshotModel, SIGNAL(dataChanged()), m_wave, SLOT(updateFrozenPoints()));
 }
 
 WaveAnalyzerOsc::~WaveAnalyzerOsc()
@@ -167,7 +167,7 @@ WaveAnalyzerWaveform::~WaveAnalyzerWaveform()
 void WaveAnalyzerWaveform::updateFrozenPoints()
 {
 	// If we are disabling don't bother updating
-	if (!m_controls->m_freezeModel.value()) { return; }
+	if (!m_controls->m_snapshotModel.value()) { return; }
 
 	for (int i = 0; i < viewportWidth; ++i)
 	{
@@ -319,7 +319,7 @@ void WaveAnalyzerWaveform::paintEvent(QPaintEvent* pe)
 		// Raw mode
 		case 0:
 		{
-			if (m_controls->m_freezeModel.value())
+			if (m_controls->m_snapshotModel.value())
 			{
 				p.setPen(frozenWaveColor);
 				p.drawPolyline(m_frozenPointsL, viewportWidth);

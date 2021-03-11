@@ -120,16 +120,16 @@ WaveAnalyzerControlDialog::WaveAnalyzerControlDialog(WaveAnalyzerControls* contr
 
 	controlLayout->addWidget(startButton);
 
-	// Freeze button
-	PixmapButton* freezeButton = new PixmapButton(this, tr("Freeze current wave"));
-	QPixmap* freezeOnPixMap = new QPixmap(PLUGIN_NAME::getIconPixmap("play"));
-	QPixmap* freezeOffPixMap = new QPixmap(PLUGIN_NAME::getIconPixmap("pause"));
-	freezeButton->setActiveGraphic(*freezeOnPixMap);
-	freezeButton->setInactiveGraphic(*freezeOffPixMap);
-	freezeButton->setCheckable(true);
-	freezeButton->setModel(&controls->m_freezeModel);
+	// Snapshot button
+	PixmapButton* snapshotButton = new PixmapButton(this, tr("Snapshot current wave"));
+	QPixmap* snapshotOnPixMap = new QPixmap(PLUGIN_NAME::getIconPixmap("play"));
+	QPixmap* snapshotOffPixMap = new QPixmap(PLUGIN_NAME::getIconPixmap("pause"));
+	snapshotButton->setActiveGraphic(*snapshotOnPixMap);
+	snapshotButton->setInactiveGraphic(*snapshotOffPixMap);
+	snapshotButton->setCheckable(true);
+	snapshotButton->setModel(&controls->m_snapshotModel);
 
-	controlLayout->addWidget(freezeButton);
+	controlLayout->addWidget(snapshotButton);
 
 	// Layout for the oscilloscope
 	QVBoxLayout* oscilloscopeLayout = new QVBoxLayout;

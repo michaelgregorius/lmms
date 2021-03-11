@@ -32,7 +32,7 @@ WaveAnalyzerControls::WaveAnalyzerControls(WaveAnalyzerEffect* effect) :
 	EffectControls(effect),
 	m_effect(effect),
 	m_startModel(false, this, tr("Start Acquiring Data")),
-	m_freezeModel(false, this, tr("Freeze current wave")),
+	m_snapshotModel(false, this, tr("Snapshot current wave")),
 	m_numberOfFrames(1024.0f, 512.0f, BUFFER_MAX_SIZE, 1.0f, this, tr("Number of frames")),
 	m_drawingMode(),
 	m_leftLevel(0, 0.0f, 1.0f, 0.01f, this, tr("Left Level")),
