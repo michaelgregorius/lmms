@@ -43,7 +43,8 @@
 #define clippingLineColor QColor::fromRgb(255, 100, 100)
 #define centerLineColor QColor::fromRgb(100, 100, 100)
 #define labelColor QColor::fromRgb(255, 255, 255)
-#define waveColor QColor::fromRgb(255, 165, 0)
+#define waveColor QColor::fromRgb(255, 165, 0, 150)
+#define frozenWaveColor QColor::fromRgb(60, 255, 45, 150)
 // Sizes
 #define labelFontSize 12
 
@@ -58,6 +59,7 @@ public:
 	void paintEvent(QPaintEvent* pe) override;
 public slots:
 	void updatePoints(int count);
+	void updateFrozenPoints();
 private:
 	QPainterPath* generateSmoothedPathL();
 	QPainterPath* generateSmoothedPathR();
@@ -69,6 +71,9 @@ private:
 	// The points representing the sample values of left and right
 	QPoint m_pointsL[viewportWidth];
 	QPoint m_pointsR[viewportWidth];
+	// The points for the frozen waveform
+	QPoint m_frozenPointsL[viewportWidth];
+	QPoint m_frozenPointsR[viewportWidth];
 };
 
 class WaveAnalyzerOsc : public QWidget

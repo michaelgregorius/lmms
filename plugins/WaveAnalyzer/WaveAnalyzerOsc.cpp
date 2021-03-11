@@ -50,6 +50,9 @@ WaveAnalyzerOsc::WaveAnalyzerOsc(WaveAnalyzerControls* controls, QWidget* parent
 
 	// Connect signal to repaint when buffer changes
 	connect(m_controls, SIGNAL(bufferChanged(int)), m_wave, SLOT(updatePoints(int)));
+
+	// Connect signal to update frozen waveform points when button is clicked
+	connect(&m_controls->m_freezeModel, SIGNAL(dataChanged()), m_wave, SLOT(updateFrozenPoints()));
 }
 
 WaveAnalyzerOsc::~WaveAnalyzerOsc()
@@ -159,6 +162,18 @@ WaveAnalyzerWaveform::WaveAnalyzerWaveform(WaveAnalyzerControls* controls, QWidg
 
 WaveAnalyzerWaveform::~WaveAnalyzerWaveform()
 {
+}
+
+void WaveAnalyzerWaveform::updateFrozenPoints()
+{
+	// If we are disabling don't bother updating
+	if (!m_controls->m_freezeModel.value()) { return; }
+
+	for (int i = 0; i < viewportWidth; ++i)
+	{
+		m_frozenPointsL[i] = m_pointsL[i];
+		m_frozenPointsR[i] = m_pointsR[i];
+	}
 }
 
 void WaveAnalyzerWaveform::updatePoints(int count)
@@ -298,13 +313,19 @@ void WaveAnalyzerWaveform::paintEvent(QPaintEvent* pe)
 	QPainter p(this);
 
 	p.setRenderHint(QPainter::Antialiasing);
-	p.setPen(waveColor);
 
 	switch(m_controls->m_drawingMode.value())
 	{
 		// Raw mode
 		case 0:
 		{
+			if (m_controls->m_freezeModel.value())
+			{
+				p.setPen(frozenWaveColor);
+				p.drawPolyline(m_frozenPointsL, viewportWidth);
+				p.drawPolyline(m_frozenPointsR, viewportWidth);
+			}
+			p.setPen(waveColor);
 			p.drawPolyline(m_pointsL, viewportWidth);
 			p.drawPolyline(m_pointsR, viewportWidth);
 			break;
@@ -312,6 +333,7 @@ void WaveAnalyzerWaveform::paintEvent(QPaintEvent* pe)
 		// Smoothed bezier
 		case 1:
 		{
+			p.setPen(waveColor);
 			QPainterPath* path;
 			path = generateSmoothedPathL();
 			p.drawPath(*path);
