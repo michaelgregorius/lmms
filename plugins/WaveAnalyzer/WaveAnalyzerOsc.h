@@ -76,6 +76,9 @@ private:
 	QPoint m_peaks[viewportWidth];
 	QPoint m_troughs[viewportWidth];
 
+	// Pixmap of the frozen waveform
+	QPixmap* m_frozenWave;
+
 	// The points for the frozen waveform
 	QPoint m_frozenPointsL[viewportWidth];
 	QPoint m_frozenPointsR[viewportWidth];

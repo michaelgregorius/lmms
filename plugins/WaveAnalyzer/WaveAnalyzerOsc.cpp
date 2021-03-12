@@ -153,16 +153,66 @@ WaveAnalyzerWaveform::WaveAnalyzerWaveform(WaveAnalyzerControls* controls, QWidg
 	setMinimumSize(s);
 	setMaximumSize(s);
 	resize(s);
+
+	// Create frozen wave pixmap (for storing the snapshot instead of redrawing it everytime)
+	m_frozenWave = new QPixmap(viewportWidth, viewportHeight);
 }
 
 WaveAnalyzerWaveform::~WaveAnalyzerWaveform()
 {
+	delete m_frozenWave;
 }
 
 void WaveAnalyzerWaveform::updateFrozenPoints()
 {
 	// If we are disabling don't bother updating
 	if (!m_controls->m_snapshotModel.value()) { return; }
+
+	// Clear the frozenWave pixmap
+	m_frozenWave->fill(QColor("Transparent"));
+
+	// Painter to fill the pixmap
+	QPainter p(m_frozenWave);
+	p.setPen(frozenWaveColor);
+
+	switch(m_controls->m_drawingMode.value())
+	{
+		case 0:
+		case 2:
+		{
+			for (int i = 0; i < viewportWidth; ++i)
+			{
+				m_frozenPointsL[i] = m_pointsL[i];
+				m_frozenPointsR[i] = m_pointsR[i];
+			}
+			p.drawPolyline(m_frozenPointsL, viewportWidth);
+			p.drawPolyline(m_frozenPointsR, viewportWidth);
+			break;
+		}
+		case 1:
+		{
+			// We draw the last point separately so we don't
+			// connect it to the next point
+			for (int i = 0; i < viewportWidth - 1; ++i)
+			{
+				m_frozenPeaks[i] = m_peaks[i];
+				m_frozenTroughs[i] = m_troughs[i];
+
+				// Draw the line between peak and trough
+				p.drawLine(m_frozenPeaks[i], m_frozenTroughs[i]);
+				// Connect this trough to the next peak
+				p.drawLine(m_frozenTroughs[i], m_frozenPeaks[i + 1]);
+			}
+			// Draw last points
+			m_frozenPeaks[viewportWidth - 1] = m_peaks[viewportWidth - 1];
+			m_frozenTroughs[viewportWidth - 1] = m_troughs[viewportWidth - 1];
+			p.drawLine(m_frozenPeaks[viewportWidth - 1], m_frozenTroughs[viewportWidth - 1]);
+			break;
+		}
+		default:
+			qWarning("WaveAnalyzer: Invalid drawing mode!");
+			return;
+	}
 
 	for (int i = 0; i < viewportWidth; ++i)
 	{
@@ -382,9 +432,7 @@ void WaveAnalyzerWaveform::paintEvent(QPaintEvent* pe)
 		{
 			if (m_controls->m_snapshotModel.value())
 			{
-				p.setPen(frozenWaveColor);
-				p.drawPolyline(m_frozenPointsL, viewportWidth);
-				p.drawPolyline(m_frozenPointsR, viewportWidth);
+				p.drawPixmap(0, 0, *m_frozenWave);
 			}
 			p.setPen(waveColor);
 			p.drawPolyline(m_pointsL, viewportWidth);
@@ -396,19 +444,7 @@ void WaveAnalyzerWaveform::paintEvent(QPaintEvent* pe)
 		{
 			if (m_controls->m_snapshotModel.value())
 			{
-				p.setPen(frozenWaveColor);
-				// We only go until viewportWidth - 1 because we don't
-				// have a next point to connect on the last one, so we draw
-				// it separately after the loop
-				for (int i = 0; i < viewportWidth - 1; ++i)
-				{
-					// Draw line between peak and trough
-					p.drawLine(m_frozenPeaks[i], m_frozenTroughs[i]);
-					// Connect this trough to the next peak
-					p.drawLine(m_frozenTroughs[i], m_frozenPeaks[i + 1]);
-				}
-				// Draw last peak and trough
-				p.drawLine(m_frozenPeaks[viewportWidth - 1], m_frozenTroughs[viewportWidth - 1]);
+				p.drawPixmap(0, 0, *m_frozenWave);
 			}
 			p.setPen(waveColor);
 			for (int i = 0; i < viewportWidth - 1; ++i)
@@ -422,6 +458,8 @@ void WaveAnalyzerWaveform::paintEvent(QPaintEvent* pe)
 		// Smoothed bezier
 		case 2:
 		{
+			p.drawPixmap(0, 0, *m_frozenWave);
+
 			p.setPen(waveColor);
 			QPainterPath* path;
 			path = generateSmoothedPathL();
