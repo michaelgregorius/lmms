@@ -458,7 +458,10 @@ void WaveAnalyzerWaveform::paintEvent(QPaintEvent* pe)
 		// Smoothed bezier
 		case 2:
 		{
-			p.drawPixmap(0, 0, *m_frozenWave);
+			if (m_controls->m_snapshotModel.value())
+			{
+				p.drawPixmap(0, 0, *m_frozenWave);
+			}
 
 			p.setPen(waveColor);
 			QPainterPath* path;
