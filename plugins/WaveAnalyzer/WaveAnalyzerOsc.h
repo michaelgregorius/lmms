@@ -71,9 +71,18 @@ private:
 	// The points representing the sample values of left and right
 	QPoint m_pointsL[viewportWidth];
 	QPoint m_pointsR[viewportWidth];
+
+	// Peaks and troughs
+	QPoint m_peaks[viewportWidth];
+	QPoint m_troughs[viewportWidth];
+
 	// The points for the frozen waveform
 	QPoint m_frozenPointsL[viewportWidth];
 	QPoint m_frozenPointsR[viewportWidth];
+
+	// The points for the frozen peaks/troughs
+	QPoint m_frozenPeaks[viewportWidth];
+	QPoint m_frozenTroughs[viewportWidth];
 };
 
 class WaveAnalyzerOsc : public QWidget

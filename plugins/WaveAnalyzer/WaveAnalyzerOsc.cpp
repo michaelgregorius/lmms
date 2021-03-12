@@ -168,6 +168,9 @@ void WaveAnalyzerWaveform::updateFrozenPoints()
 	{
 		m_frozenPointsL[i] = m_pointsL[i];
 		m_frozenPointsR[i] = m_pointsR[i];
+
+		m_frozenPeaks[i] = m_peaks[i];
+		m_frozenTroughs[i] = m_troughs[i];
 	}
 }
 
@@ -191,22 +194,82 @@ void WaveAnalyzerWaveform::updatePoints(int count)
 	int currentFrame = totalFrames - count;
 	int currentPixel = totalPixels - (count / framesPerPixel);
 
-	for (; currentPixel < totalPixels; ++currentPixel)
+	// Raw mode will get the value of the immediate frame
+	// while Peaks/Troughs will get the peaks and troughs of the range
+	switch(m_controls->m_drawingMode.value())
 	{
-		float valueL = 0;
-		float valueR = 0;
-
-		if (currentFrame <= lastFrame)
+		// Raw and Smoothed Bezier
+		case 0:
+		case 2:
 		{
-			valueL = m_controls->m_ampBufferL[currentFrame];
-			valueR = m_controls->m_ampBufferR[currentFrame];
-			currentFrame += framesPerPixel;
-		}
+			for (; currentPixel < totalPixels; ++currentPixel)
+			{
+				float valueL = 0;
+				float valueR = 0;
 
-		int leftY = baseY - (valueL * ySpace);
-		int rightY = baseY - (valueR * ySpace);
-		m_pointsL[currentPixel] = QPoint(currentPixel, leftY);
-		m_pointsR[currentPixel] = QPoint(currentPixel, rightY);
+				if (currentFrame <= lastFrame)
+				{
+					valueL = m_controls->m_ampBufferL[currentFrame];
+					valueR = m_controls->m_ampBufferR[currentFrame];
+					currentFrame += framesPerPixel;
+				}
+
+				int leftY = baseY - (valueL * ySpace);
+				int rightY = baseY - (valueR * ySpace);
+				m_pointsL[currentPixel] = QPoint(currentPixel, leftY);
+				m_pointsR[currentPixel] = QPoint(currentPixel, rightY);
+
+				// Peaks and troughs are "zeroed" here (we don't have that information
+				// on that mode, to prevent the processing time of gathering it)
+				m_peaks[currentPixel] = QPoint(currentPixel, baseY);
+				m_troughs[currentPixel] = QPoint(currentPixel, baseY);
+			}
+			break;
+		}
+		// Peaks/Troughs
+		case 1:
+		{
+			for (; currentPixel < totalPixels; ++currentPixel)
+			{
+				float peak = std::numeric_limits<float>::min();
+				float trough = std::numeric_limits<float>::max();
+
+				for
+				(
+					int i = 0;
+					(currentFrame + i) <= lastFrame && i < framesPerPixel;
+					++i
+				)
+				{
+					auto lAmp = m_controls->m_ampBufferL[currentFrame + i];
+					auto rAmp = m_controls->m_ampBufferR[currentFrame + i];
+
+					// Get peaks and troughs
+					if (lAmp > peak) { peak = lAmp; }
+					if (rAmp > peak) { peak = rAmp; }
+					if (lAmp < trough) { trough = lAmp; }
+					if (rAmp < trough) { trough = rAmp; }
+				}
+
+				currentFrame += framesPerPixel;
+
+				// Set our peaks and troughs points
+				int peakY = baseY - (peak * ySpace);
+				int troughY = baseY - (trough * ySpace);
+				m_peaks[currentPixel] = QPoint(currentPixel, peakY);
+				m_troughs[currentPixel] = QPoint(currentPixel, troughY);
+
+				// Regular points are "zeroed".
+				// TODO: We could also update them, I'm mostly zeroing for consistent
+				// behavior. Think about this later.
+				m_pointsL[currentPixel] = QPoint(currentPixel, baseY);
+				m_pointsR[currentPixel] = QPoint(currentPixel, baseY);
+			}
+			break;
+		}
+		default:
+			qWarning("WaveAnalyzer: Invalid drawing mode!");
+			return;
 	}
 
 	repaint();
@@ -224,6 +287,9 @@ void WaveAnalyzerWaveform::shiftPoints(int count)
 		// Else we shift the points
 		m_pointsL[i] = QPoint(i, m_pointsL[i + count].y());
 		m_pointsR[i] = QPoint(i, m_pointsR[i + count].y());
+
+		m_peaks[i] = QPoint(i, m_peaks[i + count].y());
+		m_troughs[i] = QPoint(i, m_troughs[i + count].y());
 	}
 }
 
@@ -325,8 +391,36 @@ void WaveAnalyzerWaveform::paintEvent(QPaintEvent* pe)
 			p.drawPolyline(m_pointsR, viewportWidth);
 			break;
 		}
-		// Smoothed bezier
+		// Peaks/Troughs
 		case 1:
+		{
+			if (m_controls->m_snapshotModel.value())
+			{
+				p.setPen(frozenWaveColor);
+				// We only go until viewportWidth - 1 because we don't
+				// have a next point to connect on the last one, so we draw
+				// it separately after the loop
+				for (int i = 0; i < viewportWidth - 1; ++i)
+				{
+					// Draw line between peak and trough
+					p.drawLine(m_frozenPeaks[i], m_frozenTroughs[i]);
+					// Connect this trough to the next peak
+					p.drawLine(m_frozenTroughs[i], m_frozenPeaks[i + 1]);
+				}
+				// Draw last peak and trough
+				p.drawLine(m_frozenPeaks[viewportWidth - 1], m_frozenTroughs[viewportWidth - 1]);
+			}
+			p.setPen(waveColor);
+			for (int i = 0; i < viewportWidth - 1; ++i)
+			{
+				p.drawLine(m_peaks[i], m_troughs[i]);
+				p.drawLine(m_troughs[i], m_peaks[i + 1]);
+			}
+			p.drawLine(m_peaks[viewportWidth - 1], m_troughs[viewportWidth - 1]);
+			break;
+		}
+		// Smoothed bezier
+		case 2:
 		{
 			p.setPen(waveColor);
 			QPainterPath* path;

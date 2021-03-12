@@ -42,6 +42,7 @@ WaveAnalyzerControls::WaveAnalyzerControls(WaveAnalyzerEffect* effect) :
 {
 	// Add the drawing modes
 	m_drawingMode.addItem(tr("Raw"));
+	m_drawingMode.addItem(tr("Peaks/Troughs"));
 	m_drawingMode.addItem(tr("Smoothed Bezier"));
 	m_drawingMode.setValue(0);
 }
