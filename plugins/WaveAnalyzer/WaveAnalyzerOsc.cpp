@@ -177,8 +177,8 @@ void WaveAnalyzerWaveform::updateFrozenPoints()
 
 	switch(m_controls->m_drawingMode.value())
 	{
+		// Raw
 		case 0:
-		case 2:
 		{
 			for (int i = 0; i < viewportWidth; ++i)
 			{
@@ -189,25 +189,36 @@ void WaveAnalyzerWaveform::updateFrozenPoints()
 			p.drawPolyline(m_frozenPointsR, viewportWidth);
 			break;
 		}
+		// Peaks / Troughs
 		case 1:
 		{
-			// We draw the last point separately so we don't
-			// connect it to the next point
-			for (int i = 0; i < viewportWidth - 1; ++i)
+			// Draw first points
+			m_frozenPeaks[viewportWidth - 1] = m_peaks[viewportWidth - 1];
+			m_frozenTroughs[viewportWidth - 1] = m_troughs[viewportWidth - 1];
+			p.drawLine(m_frozenPeaks[viewportWidth - 1], m_frozenTroughs[viewportWidth - 1]);
+			// Draw remaining ones, connecting the previous troughs to the current peaks
+			for (int i = 1; i < viewportWidth; ++i)
 			{
 				m_frozenPeaks[i] = m_peaks[i];
 				m_frozenTroughs[i] = m_troughs[i];
 
+				// Connect previous trough to the this peak
+				p.drawLine(m_frozenTroughs[i - 1], m_frozenPeaks[i]);
 				// Draw the line between peak and trough
 				p.drawLine(m_frozenPeaks[i], m_frozenTroughs[i]);
-				// Connect this trough to the next peak
-				p.drawLine(m_frozenTroughs[i], m_frozenPeaks[i + 1]);
 			}
-			// Draw last points
-			m_frozenPeaks[viewportWidth - 1] = m_peaks[viewportWidth - 1];
-			m_frozenTroughs[viewportWidth - 1] = m_troughs[viewportWidth - 1];
-			p.drawLine(m_frozenPeaks[viewportWidth - 1], m_frozenTroughs[viewportWidth - 1]);
 			break;
+		}
+		// Smoothed Bezier
+		case 2:
+		{
+			QPainterPath* path;
+			path = generateSmoothedPathL();
+			p.drawPath(*path);
+			delete path;
+			path = generateSmoothedPathR();
+			p.drawPath(*path);
+			delete path;
 		}
 		default:
 			qWarning("WaveAnalyzer: Invalid drawing mode!");
