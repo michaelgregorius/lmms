@@ -60,7 +60,8 @@ bool WaveAnalyzerEffect::processAudioBuffer(sampleFrame *buffer, const fpp_t fra
 {
 	if (!isRunning() || !isEnabled()) { return false; }
 
-	if (m_controls.isViewVisible())
+	// Only do processing when GUI is visible and we haven't paused
+	if (m_controls.isViewVisible() && m_controls.m_startModel.value())
 	{
 		float avgLeft = 0;
 		float avgRight = 0;
@@ -106,7 +107,7 @@ bool WaveAnalyzerEffect::processAudioBuffer(sampleFrame *buffer, const fpp_t fra
 		m_controls.m_leftLevel.setAutomatedValue(avgLeft);
 		m_controls.m_rightLevel.setAutomatedValue(avgRight);
 	}
-	return isRunning();
+	return true;
 }
 
 extern "C"

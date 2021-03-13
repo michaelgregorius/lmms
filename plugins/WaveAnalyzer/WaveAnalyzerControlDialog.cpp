@@ -62,8 +62,8 @@ WaveAnalyzerControlDialog::WaveAnalyzerControlDialog(WaveAnalyzerControls* contr
 
 	// Start button
 	PixmapButton* startButton = new PixmapButton(this, tr("Start acquiring data"));
-	QPixmap* startOnPixMap = new QPixmap(PLUGIN_NAME::getIconPixmap("play"));
-	QPixmap* startOffPixMap = new QPixmap(PLUGIN_NAME::getIconPixmap("pause"));
+	QPixmap* startOnPixMap = new QPixmap(PLUGIN_NAME::getIconPixmap("pause"));
+	QPixmap* startOffPixMap = new QPixmap(PLUGIN_NAME::getIconPixmap("play"));
 	startButton->setActiveGraphic(*startOnPixMap);
 	startButton->setInactiveGraphic(*startOffPixMap);
 	startButton->setCheckable(true);
