@@ -30,7 +30,13 @@
 #include <QWidget>
 #include <QMouseEvent>
 
+namespace lmms
+{
+
 class WaveAnalyzerControls;
+
+namespace gui
+{
 
 class WaveAnalyzerClipIndicator : public QWidget
 {
@@ -50,5 +56,9 @@ private:
 	QPixmap* m_backgroundPixmap;
 	QPixmap* m_clipLedsPixmap;
 };
+
+}
+
+}
 
 #endif

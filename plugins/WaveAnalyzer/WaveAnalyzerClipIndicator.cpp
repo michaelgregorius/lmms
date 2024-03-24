@@ -32,6 +32,9 @@
 
 #include "embed.h"
 
+namespace lmms::gui
+{
+
 WaveAnalyzerClipIndicator::WaveAnalyzerClipIndicator(WaveAnalyzerControls* controls, QWidget* parent) :
 	QWidget(parent),
 	m_controls(controls)
@@ -90,4 +93,6 @@ void WaveAnalyzerClipIndicator::paintClipLeds(QPaintEvent* pe, QPainter & painte
 		QRect rightLed(0, height, width, height);
 		painter.drawPixmap(rightLed, *m_clipLedsPixmap, rightLed);
 	}
+}
+
 }

@@ -31,15 +31,18 @@
 #include "lmms_math.h"
 #include "plugin_export.h"
 
+namespace lmms
+{
+
 extern "C" {
 	Plugin::Descriptor PLUGIN_EXPORT WaveAnalyzer_plugin_descriptor = 
 	{
-		STRINGIFY(PLUGIN_NAME),
+		LMMS_STRINGIFY(PLUGIN_NAME),
 		"Wave Analyzer",
 		QT_TRANSLATE_NOOP("PluginBrowser", "A simple oscilloscope effect."),
 		"Ian Caio <iancaio_dev/at/hotmail.com>",
 		0x0112,
-		Plugin::Effect,
+		Plugin::Type::Effect,
 		new PluginPixmapLoader("logo"),
 		nullptr,
 		nullptr
@@ -116,4 +119,6 @@ extern "C"
 	{
 		return new WaveAnalyzerEffect(parent, static_cast<const Plugin::Descriptor::SubPluginFeatures::Key *>(data));
 	}
+}
+
 }

@@ -28,6 +28,9 @@
 #include "Effect.h"
 #include "WaveAnalyzerControls.h"
 
+namespace lmms
+{
+
 class WaveAnalyzerEffect : public Effect
 {
 public:
@@ -45,5 +48,7 @@ private:
 	// Maximum LMMS buffer size (hard coded, the actual constant is hard to get)
 	const unsigned int m_maxBufferSize = 4096;
 };
+
+}
 
 #endif

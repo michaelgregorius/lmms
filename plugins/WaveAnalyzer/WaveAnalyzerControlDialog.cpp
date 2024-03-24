@@ -37,6 +37,9 @@
 #include "PixmapButton.h"
 #include "WaveAnalyzerControls.h"
 
+namespace lmms::gui
+{
+
 WaveAnalyzerControlDialog::WaveAnalyzerControlDialog(WaveAnalyzerControls* controls) :
 	EffectControlDialog(controls)
 {
@@ -94,7 +97,7 @@ WaveAnalyzerControlDialog::WaveAnalyzerControlDialog(WaveAnalyzerControls* contr
 	comboBoxLayout->addWidget(drawingMode);
 
 	// Adds numberOfFrames Knob
-	Knob* framesKnob = new Knob(knobBright_26);
+	Knob* framesKnob = new Knob(KnobType::Bright26);
 	framesKnob->setLabel("Frames");
 	framesKnob->setModel(&controls->m_numberOfFrames);
 
@@ -140,4 +143,6 @@ WaveAnalyzerControlDialog::WaveAnalyzerControlDialog(WaveAnalyzerControls* contr
 
 WaveAnalyzerControlDialog::~WaveAnalyzerControlDialog()
 {
+}
+
 }

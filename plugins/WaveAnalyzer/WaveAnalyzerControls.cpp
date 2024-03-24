@@ -28,6 +28,9 @@
 
 #include "WaveAnalyzer.h"
 
+namespace lmms
+{
+
 WaveAnalyzerControls::WaveAnalyzerControls(WaveAnalyzerEffect* effect) :
 	EffectControls(effect),
 	m_effect(effect),
@@ -76,4 +79,6 @@ void WaveAnalyzerControls::loadSettings(const QDomElement & _this)
 
 void WaveAnalyzerControls::saveSettings(QDomDocument & doc, QDomElement & parent)
 {
+}
+
 }

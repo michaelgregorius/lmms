@@ -33,6 +33,9 @@
 #include "embed.h"
 #include "lmms_math.h"
 
+namespace lmms::gui
+{
+
 WaveAnalyzerLevelIndicator::WaveAnalyzerLevelIndicator(WaveAnalyzerControls* controls, QWidget* parent) :
 	QWidget(parent),
 	m_controls(controls),
@@ -102,4 +105,6 @@ void WaveAnalyzerLevelIndicator::paintPeaks(QPaintEvent* pe, QPainter & painter)
 	float rightSize = getProportion(clamp(rightPeak, m_minPeak, m_maxPeak)) * width;
 	QRect rightLevel(0, height, rightSize, height);
 	painter.drawPixmap(rightLevel, *m_levelsPixmap, rightLevel);
+}
+
 }

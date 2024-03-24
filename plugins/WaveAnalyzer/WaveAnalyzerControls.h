@@ -31,6 +31,18 @@
 #include "EffectControls.h"
 #include "WaveAnalyzerControlDialog.h"
 
+namespace lmms
+{
+
+namespace gui
+{
+	class WaveAnalyzerControlDialog;
+	class WaveAnalyzerLevelIndicator;
+	class WaveAnalyzerClipIndicator;
+	class WaveAnalyzerOsc;
+	class WaveAnalyzerWaveform;
+}
+
 class WaveAnalyzerEffect;
 
 class WaveAnalyzerControls : public EffectControls
@@ -55,9 +67,9 @@ public:
 		return 2;
 	}
 
-	virtual EffectControlDialog* createView()
+	virtual lmms::gui::EffectControlDialog* createView()
 	{
-		return new WaveAnalyzerControlDialog(this);
+		return new lmms::gui::WaveAnalyzerControlDialog(this);
 	}
 
 signals:
@@ -90,11 +102,13 @@ private:
 	float m_ampBufferR[BUFFER_MAX_SIZE];
 
 	friend class WaveAnalyzerEffect;
-	friend class WaveAnalyzerControlDialog;
-	friend class WaveAnalyzerLevelIndicator;
-	friend class WaveAnalyzerClipIndicator;
-	friend class WaveAnalyzerOsc;
-	friend class WaveAnalyzerWaveform;
+	friend class gui::WaveAnalyzerControlDialog;
+	friend class gui::WaveAnalyzerLevelIndicator;
+	friend class gui::WaveAnalyzerClipIndicator;
+	friend class gui::WaveAnalyzerOsc;
+	friend class gui::WaveAnalyzerWaveform;
 };
+
+}
 
 #endif

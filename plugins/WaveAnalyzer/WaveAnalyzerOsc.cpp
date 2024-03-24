@@ -32,6 +32,9 @@
 #include <QPainter>
 #include <QPainterPath>
 
+namespace lmms::gui
+{
+
 WaveAnalyzerOsc::WaveAnalyzerOsc(WaveAnalyzerControls* controls, QWidget* parent) :
 	QWidget(parent),
 	m_controls(controls)
@@ -488,4 +491,6 @@ void WaveAnalyzerWaveform::paintEvent(QPaintEvent* pe)
 			qWarning("WaveAnalyzer: Invalid drawing mode");
 			return;
 	}
+}
+
 }

@@ -29,7 +29,13 @@
 #include <QPixmap>
 #include <QWidget>
 
+namespace lmms
+{
+
 class WaveAnalyzerControls;
+
+namespace gui
+{
 
 class WaveAnalyzerLevelIndicator : public QWidget
 {
@@ -51,5 +57,9 @@ private:
 	QPixmap* m_backgroundPixmap;
 	QPixmap* m_levelsPixmap;
 };
+
+}
+
+}
 
 #endif

@@ -27,7 +27,13 @@
 
 #include "EffectControlDialog.h"
 
+namespace lmms
+{
+
 class WaveAnalyzerControls;
+
+namespace gui
+{
 
 class WaveAnalyzerControlDialog : public EffectControlDialog
 {
@@ -36,5 +42,9 @@ public:
 	WaveAnalyzerControlDialog(WaveAnalyzerControls* controls);
 	virtual ~WaveAnalyzerControlDialog();
 };
+
+}
+
+}
 
 #endif

@@ -48,7 +48,13 @@
 // Sizes
 #define labelFontSize 12
 
+namespace lmms
+{
+
 class WaveAnalyzerControls;
+
+namespace gui
+{
 
 class WaveAnalyzerWaveform : public QWidget
 {
@@ -106,5 +112,9 @@ private:
 	// Controls linked to this indicator
 	WaveAnalyzerControls* m_controls;
 };
+
+}
+
+}
 
 #endif
