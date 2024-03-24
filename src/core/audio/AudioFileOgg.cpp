@@ -36,15 +36,17 @@
 #include <string>
 #include <vorbis/vorbisenc.h>
 
-#include "Mixer.h"
+#include "AudioEngine.h"
 
+namespace lmms
+{
 
 AudioFileOgg::AudioFileOgg(	OutputSettings const & outputSettings,
 				const ch_cnt_t channels,
 				bool & successful,
 				const QString & file,
-				Mixer* mixer ) :
-	AudioFileDevice( outputSettings, channels, file, mixer )
+				AudioEngine* audioEngine ) :
+	AudioFileDevice( outputSettings, channels, file, audioEngine )
 {
 	m_ok = successful = outputFileOpened() && startEncoding();
 }
@@ -81,7 +83,7 @@ bool AudioFileOgg::startEncoding()
 	vc.user_comments = &user_comments;
 	vc.comment_lengths = &comment_length;
 	vc.comments = 1;
-	vc.vendor = NULL;
+	vc.vendor = nullptr;
 
 	m_channels = channels();
 
@@ -122,11 +124,11 @@ bool AudioFileOgg::startEncoding()
 	if( useVariableBitRate )
 	{
 		// Turn off management entirely (if it was turned on).
-		vorbis_encode_ctl( &m_vi, OV_ECTL_RATEMANAGE_SET, NULL );
+		vorbis_encode_ctl( &m_vi, OV_ECTL_RATEMANAGE_SET, nullptr );
 	}
 	else
 	{
-		vorbis_encode_ctl( &m_vi, OV_ECTL_RATEMANAGE_AVG, NULL );
+		vorbis_encode_ctl( &m_vi, OV_ECTL_RATEMANAGE_AVG, nullptr );
 	}
 
 	vorbis_encode_setup_init( &m_vi );
@@ -183,12 +185,7 @@ bool AudioFileOgg::startEncoding()
 	return true;
 }
 
-
-
-
-void AudioFileOgg::writeBuffer( const surroundSampleFrame * _ab,
-						const fpp_t _frames,
-						const float _master_gain )
+void AudioFileOgg::writeBuffer(const surroundSampleFrame* _ab, const fpp_t _frames)
 {
 	int eos = 0;
 
@@ -199,7 +196,7 @@ void AudioFileOgg::writeBuffer( const surroundSampleFrame * _ab,
 	{
 		for( ch_cnt_t chnl = 0; chnl < channels(); ++chnl )
 		{
-			buffer[chnl][frame] = _ab[frame][chnl] * _master_gain;
+			buffer[chnl][frame] = _ab[frame][chnl];
 		}
 	}
 
@@ -210,7 +207,7 @@ void AudioFileOgg::writeBuffer( const surroundSampleFrame * _ab,
 	while( vorbis_analysis_blockout( &m_vd, &m_vb ) == 1 )
 	{
 		// Do the main analysis, creating a packet
-		vorbis_analysis( &m_vb, NULL );
+		vorbis_analysis( &m_vb, nullptr );
 		vorbis_bitrate_addblock( &m_vb );
 
 		while( vorbis_bitrate_flushpacket( &m_vd, &m_op ) )
@@ -256,7 +253,7 @@ void AudioFileOgg::finishEncoding()
 	if( m_ok )
 	{
 		// just for flushing buffers...
-		writeBuffer( NULL, 0, 0.0f );
+		writeBuffer(nullptr, 0);
 
 		// clean up
 		ogg_stream_clear( &m_os );
@@ -268,6 +265,8 @@ void AudioFileOgg::finishEncoding()
 }
 
 
-#endif
+} // namespace lmms
+
+#endif // LMMS_HAVE_OGGVORBIS
 
 

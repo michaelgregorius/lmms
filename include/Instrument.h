@@ -23,16 +23,19 @@
  *
  */
 
-#ifndef INSTRUMENT_H
-#define INSTRUMENT_H
+#ifndef LMMS_INSTRUMENT_H
+#define LMMS_INSTRUMENT_H
 
 #include <QString>
+
+#include "Flags.h"
 #include "lmms_export.h"
 #include "lmms_basics.h"
-#include "MemoryManager.h"
 #include "Plugin.h"
 #include "TimePos.h"
 
+namespace lmms
+{
 
 // forward-declarations
 class InstrumentTrack;
@@ -43,9 +46,8 @@ class Track;
 
 class LMMS_EXPORT Instrument : public Plugin
 {
-	MM_OPERATORS
 public:
-	enum Flag
+	enum class Flag
 	{
 		NoFlags = 0x00,
 		IsSingleStreamed = 0x01,	/*! Instrument provides a single audio stream for all notes */
@@ -53,12 +55,12 @@ public:
 		IsNotBendable = 0x04,		/*! Instrument can't react to pitch bend changes */
 	};
 
-	Q_DECLARE_FLAGS(Flags, Flag);
+	using Flags = lmms::Flags<Flag>;
 
 	Instrument(InstrumentTrack * _instrument_track,
 			const Descriptor * _descriptor,
 			const Descriptor::SubPluginFeatures::Key * key = nullptr);
-	virtual ~Instrument() = default;
+	~Instrument() override = default;
 
 	// --------------------------------------------------------------------
 	// functions that can/should be re-implemented:
@@ -68,7 +70,7 @@ public:
 
 	// if the plugin doesn't play each note, it can create an instrument-
 	// play-handle and re-implement this method, so that it mixes its
-	// output buffer only once per mixer-period
+	// output buffer only once per audio engine period
 	virtual void play( sampleFrame * _working_buffer );
 
 	// to be implemented by actual plugin
@@ -100,7 +102,7 @@ public:
 
 	virtual Flags flags() const
 	{
-		return NoFlags;
+		return Flag::NoFlags;
 	}
 
 	// sub-classes can re-implement this for receiving all incoming
@@ -146,6 +148,10 @@ private:
 
 } ;
 
-Q_DECLARE_OPERATORS_FOR_FLAGS(Instrument::Flags)
 
-#endif
+LMMS_DECLARE_OPERATORS_FOR_FLAGS(Instrument::Flag)
+
+
+} // namespace lmms
+
+#endif // LMMS_INSTRUMENT_H

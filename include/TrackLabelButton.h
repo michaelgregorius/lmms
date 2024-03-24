@@ -22,12 +22,13 @@
  *
  */
 
-
-#ifndef TRACK_LABEL_BUTTON_H
-#define TRACK_LABEL_BUTTON_H
+#ifndef LMMS_GUI_TRACK_LABEL_BUTTON_H
+#define LMMS_GUI_TRACK_LABEL_BUTTON_H
 
 #include <QToolButton>
-#include <QLineEdit>
+
+namespace lmms::gui
+{
 
 class TrackView;
 
@@ -39,7 +40,7 @@ class TrackLabelButton : public QToolButton
 	Q_OBJECT
 public:
 	TrackLabelButton( TrackView * _tv, QWidget * _parent );
-	virtual ~TrackLabelButton();
+	~TrackLabelButton() override = default;
 
 
 public slots:
@@ -54,9 +55,11 @@ protected:
 	void mousePressEvent( QMouseEvent * _me ) override;
 	void mouseDoubleClickEvent( QMouseEvent * _me ) override;
 	void mouseReleaseEvent( QMouseEvent * _me ) override;
-	void paintEvent( QPaintEvent * _pe ) override;
+	void paintEvent(QPaintEvent* pe) override;
 	void resizeEvent( QResizeEvent * _re ) override;
 
+private:
+	bool isInCompactMode() const;
 
 private:
 	TrackView * m_trackView;
@@ -67,4 +70,7 @@ private:
 
 } ;
 
-#endif
+
+} // namespace lmms::gui
+
+#endif // LMMS_GUI_TRACK_LABEL_BUTTON_H

@@ -25,27 +25,29 @@
 #include "EqEffect.h"
 
 #include "Engine.h"
-#include "EqFader.h"
-#include "interpolation.h"
 #include "lmms_math.h"
 
 #include "embed.h"
 #include "plugin_export.h"
+
+namespace lmms
+{
+
 
 extern "C"
 {
 
 Plugin::Descriptor PLUGIN_EXPORT eq_plugin_descriptor =
 {
-	STRINGIFY( PLUGIN_NAME ),
+	LMMS_STRINGIFY( PLUGIN_NAME ),
 	"Equalizer",
 	QT_TRANSLATE_NOOP( "PluginBrowser", "A native eq plugin" ),
 	"Dave French <contact/dot/dave/dot/french3/at/googlemail/dot/com>",
 	0x0100,
-	Plugin::Effect,
+	Plugin::Type::Effect,
 	new PluginPixmapLoader("logo"),
-	NULL,
-	NULL
+	nullptr,
+	nullptr,
 } ;
 
 }
@@ -62,21 +64,14 @@ EqEffect::EqEffect( Model *parent, const Plugin::Descriptor::SubPluginFeatures::
 
 
 
-EqEffect::~EqEffect()
-{
-}
-
-
-
-
 bool EqEffect::processAudioBuffer( sampleFrame *buf, const fpp_t frames )
 {
-	const int sampleRate = Engine::mixer()->processingSampleRate();
+	const int sampleRate = Engine::audioEngine()->processingSampleRate();
 
 	//wet/dry controls
 	const float dry = dryLevel();
 	const float wet = wetLevel();
-	sample_t dryS[2];
+	auto dryS = std::array<sample_t, 2>{};
 	// setup sample exact controls
 	float hpRes = m_eqControls.m_hpResModel.value();
 	float lowShelfRes = m_eqControls.m_lowShelfResModel.value();
@@ -294,6 +289,9 @@ bool EqEffect::processAudioBuffer( sampleFrame *buf, const fpp_t frames )
 
 float EqEffect::peakBand( float minF, float maxF, EqAnalyser *fft, int sr )
 {
+	auto const fftEnergy = fft->getEnergy();
+	if (fftEnergy == 0.) { return 0.; }
+
 	float peak = -60;
 	float *b = fft->m_bands;
 	float h = 0;
@@ -301,7 +299,7 @@ float EqEffect::peakBand( float minF, float maxF, EqAnalyser *fft, int sr )
 	{
 		if( bandToFreq( x ,sr) >= minF && bandToFreq( x,sr ) <= maxF )
 		{
-			h = 20 * ( log10( *b / fft->getEnergy() ) );
+			h = 20. * log10(*b / fftEnergy);
 			peak = h > peak ? h : peak;
 		}
 	}
@@ -365,3 +363,6 @@ PLUGIN_EXPORT Plugin * lmms_plugin_main( Model* parent, void* data )
 }
 
 }
+
+
+} // namespace lmms
