@@ -34,7 +34,7 @@
 #include <QRegularExpression>
 #include <QTextStream>
 
-#include "ComboBox.h"
+#include "LmmsComboBox.h"
 #include "embed.h"
 #include "Engine.h"
 #include "FileDialog.h"
@@ -91,8 +91,7 @@ MicrotunerConfig::MicrotunerConfig() :
 	{
 		m_scaleComboModel.addItem(QString::number(i) + ": " + Engine::getSong()->getScale(i)->getDescription());
 	}
-	auto scaleCombo = new ComboBox();
-	scaleCombo->setModel(&m_scaleComboModel);
+	auto scaleCombo = new LmmsComboBox(this, &m_scaleComboModel);
 	microtunerLayout->addWidget(scaleCombo, 1, 0, 1, 2);
 	connect(&m_scaleComboModel, &ComboBoxModel::dataChanged, [=] {updateScaleForm();});
 
@@ -129,8 +128,7 @@ MicrotunerConfig::MicrotunerConfig() :
 	{
 		m_keymapComboModel.addItem(QString::number(i) + ": " + Engine::getSong()->getKeymap(i)->getDescription());
 	}
-	auto keymapCombo = new ComboBox();
-	keymapCombo->setModel(&m_keymapComboModel);
+	auto keymapCombo = new LmmsComboBox(this, &m_keymapComboModel);
 	microtunerLayout->addWidget(keymapCombo, 1, 2, 1, 2);
 	connect(&m_keymapComboModel, &ComboBoxModel::dataChanged, [=] {updateKeymapForm();});
 
