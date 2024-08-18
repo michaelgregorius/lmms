@@ -59,7 +59,7 @@ WaveAnalyzerEffect::~WaveAnalyzerEffect()
 {
 }
 
-bool WaveAnalyzerEffect::processAudioBuffer(sampleFrame *buffer, const fpp_t frameCount)
+bool WaveAnalyzerEffect::processAudioBuffer(SampleFrame *buffer, const fpp_t frameCount)
 {
 	if (!isRunning() || !isEnabled()) { return false; }
 

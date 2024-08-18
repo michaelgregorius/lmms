@@ -37,7 +37,7 @@ public:
 	WaveAnalyzerEffect(Model *parent, const Descriptor::SubPluginFeatures::Key *key);
 	virtual ~WaveAnalyzerEffect();
 
-	virtual bool processAudioBuffer(sampleFrame *buffer, const fpp_t frameCount);
+	virtual bool processAudioBuffer(SampleFrame *buffer, const fpp_t frameCount);
 
 	virtual WaveAnalyzerControls* controls()
 	{
