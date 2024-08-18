@@ -37,7 +37,6 @@
 #include "LcdSpinBox.h"
 #include "MainWindow.h"
 #include "MidiJack.h"
-#include "gui_templates.h"
 
 namespace lmms
 {
@@ -49,7 +48,7 @@ AudioJack::AudioJack(bool& successful, AudioEngine* audioEngineParam)
 		std::clamp<int>(
 			ConfigManager::inst()->value("audiojack", "channels").toInt(),
 			DEFAULT_CHANNELS,
-			SURROUND_CHANNELS
+			DEFAULT_CHANNELS
 		),
 		// clang-format on
 		audioEngineParam)
@@ -57,7 +56,7 @@ AudioJack::AudioJack(bool& successful, AudioEngine* audioEngineParam)
 	, m_active(false)
 	, m_midiClient(nullptr)
 	, m_tempOutBufs(new jack_default_audio_sample_t*[channels()])
-	, m_outBuf(new surroundSampleFrame[audioEngine()->framesPerPeriod()])
+	, m_outBuf(new SampleFrame[audioEngine()->framesPerPeriod()])
 	, m_framesDoneInCurBuf(0)
 	, m_framesToDoInCurBuf(0)
 {
@@ -230,24 +229,6 @@ void AudioJack::stopProcessing()
 	m_stopped = true;
 }
 
-
-
-
-void AudioJack::applyQualitySettings()
-{
-	if (hqAudio())
-	{
-		setSampleRate(Engine::audioEngine()->processingSampleRate());
-
-		if (jack_get_sample_rate(m_client) != sampleRate()) { setSampleRate(jack_get_sample_rate(m_client)); }
-	}
-
-	AudioDevice::applyQualitySettings();
-}
-
-
-
-
 void AudioJack::registerPort(AudioPort* port)
 {
 #ifdef AUDIO_PORT_SUPPORT
@@ -411,7 +392,7 @@ AudioJack::setupWidget::setupWidget(QWidget* parent)
 	form->addRow(tr("Client name"), m_clientName);
 
 	auto m = new gui::LcdSpinBoxModel(/* this */);
-	m->setRange(DEFAULT_CHANNELS, SURROUND_CHANNELS);
+	m->setRange(DEFAULT_CHANNELS, DEFAULT_CHANNELS);
 	m->setStep(2);
 	m->setValue(ConfigManager::inst()->value("audiojack", "channels").toInt());
 

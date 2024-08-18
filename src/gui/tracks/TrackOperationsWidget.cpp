@@ -38,7 +38,6 @@
 #include "DataFile.h"
 #include "embed.h"
 #include "Engine.h"
-#include "gui_templates.h"
 #include "InstrumentTrackView.h"
 #include "PixmapButton.h"
 #include "Song.h"
@@ -236,6 +235,12 @@ void TrackOperationsWidget::cloneTrack()
 	{
 		tcView->moveTrackView( newTrackView, i - 1 );
 		i--;
+	}
+
+	if (m_soloBtn->model()->value())
+	{
+		// if this track was solo, make the new track the new solo
+		newTrack->toggleSolo();
 	}
 }
 

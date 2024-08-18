@@ -109,7 +109,7 @@ NotePlayHandle::NotePlayHandle( InstrumentTrack* instrumentTrack,
 		m_instrumentTrack->midiNoteOn( *this );
 	}
 
-	if(m_instrumentTrack->instrument() && m_instrumentTrack->instrument()->flags() & Instrument::Flag::IsSingleStreamed )
+	if (m_instrumentTrack->instrument() && m_instrumentTrack->instrument()->isSingleStreamed())
 	{
 		setUsesBuffer( false );
 	}
@@ -183,7 +183,7 @@ int NotePlayHandle::midiKey() const
 
 
 
-void NotePlayHandle::play( sampleFrame * _working_buffer )
+void NotePlayHandle::play( SampleFrame* _working_buffer )
 {
 	if (m_muted)
 	{
@@ -568,7 +568,7 @@ void NotePlayHandle::processTimePos(const TimePos& time, float pitchValue, bool 
 	else
 	{
 		const float v = detuning()->automationClip()->valueAt(time - songGlobalParentOffset() - pos());
-		if (!typeInfo<float>::isEqual(v, m_baseDetuning->value()))
+		if (!approximatelyEqual(v, m_baseDetuning->value()))
 		{
 			m_baseDetuning->setValue(v);
 			updateFrequency();

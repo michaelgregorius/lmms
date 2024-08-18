@@ -354,8 +354,7 @@ float AutomatableModel::inverseScaledValue( float value ) const
 template<class T>
 void roundAt( T& value, const T& where, const T& step_size )
 {
-	if (std::abs(value - where)
-		< typeInfo<float>::minEps() * std::abs(step_size))
+	if (std::abs(value - where) < F_EPSILON * std::abs(step_size))
 	{
 		value = where;
 	}
@@ -583,7 +582,7 @@ float AutomatableModel::controllerValue( int frameOffset ) const
 				"lacks implementation for a scale type");
 			break;
 		}
-		if( typeInfo<float>::isEqual( m_step, 1 ) && m_hasStrictStepSize )
+		if (approximatelyEqual(m_step, 1) && m_hasStrictStepSize)
 		{
 			return std::round(v);
 		}
@@ -613,10 +612,9 @@ ValueBuffer * AutomatableModel::valueBuffer()
 
 	float val = m_value; // make sure our m_value doesn't change midway
 
-	ValueBuffer * vb;
 	if (m_controllerConnection && m_useControllerValue && m_controllerConnection->getController()->isSampleExact())
 	{
-		vb = m_controllerConnection->valueBuffer();
+		auto vb = m_controllerConnection->valueBuffer();
 		if( vb )
 		{
 			float * values = vb->values();
@@ -656,7 +654,7 @@ ValueBuffer * AutomatableModel::valueBuffer()
 		if (lm && lm->controllerConnection() && lm->useControllerValue() &&
 				lm->controllerConnection()->getController()->isSampleExact())
 		{
-			vb = lm->valueBuffer();
+			auto vb = lm->valueBuffer();
 			float * values = vb->values();
 			float * nvalues = m_valueBuffer.values();
 			for (int i = 0; i < vb->length(); i++)

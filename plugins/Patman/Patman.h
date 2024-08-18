@@ -60,7 +60,7 @@ public:
 	~PatmanInstrument() override;
 
 	void playNote( NotePlayHandle * _n,
-						sampleFrame * _working_buffer ) override;
+						SampleFrame* _working_buffer ) override;
 	void deleteNotePluginData( NotePlayHandle * _n ) override;
 
 
@@ -71,9 +71,9 @@ public:
 
 	QString nodeName() const override;
 
-	f_cnt_t desiredReleaseFrames() const override
+	float desiredReleaseTimeMs() const override
 	{
-		return( 128 );
+		return 3.f;
 	}
 
 	gui::PluginView* instantiateView( QWidget * _parent ) override;

@@ -35,7 +35,6 @@
 #include "LcdSpinBox.h"
 #include "AudioEngine.h"
 #include "Engine.h"
-#include "gui_templates.h"
 
 #include "ConfigManager.h"
 
@@ -47,7 +46,7 @@ AudioSndio::AudioSndio(bool & _success_ful, AudioEngine * _audioEngine) :
 	AudioDevice(std::clamp<ch_cnt_t>(
 		ConfigManager::inst()->value("audiosndio", "channels").toInt(),
 		DEFAULT_CHANNELS,
-		SURROUND_CHANNELS), _audioEngine),
+		DEFAULT_CHANNELS), _audioEngine),
 	m_convertEndian ( false )
 {
 	_success_ful = false;
@@ -140,23 +139,9 @@ void AudioSndio::stopProcessing()
 	stopProcessingThread( this );
 }
 
-
-void AudioSndio::applyQualitySettings()
-{
-	if( hqAudio() )
-	{
-		setSampleRate( Engine::audioEngine()->processingSampleRate() );
-
-		/* change sample rate to sampleRate() */
-	}
-
-	AudioDevice::applyQualitySettings();
-}
-
-
 void AudioSndio::run()
 {
-	surroundSampleFrame * temp = new surroundSampleFrame[audioEngine()->framesPerPeriod()];
+	SampleFrame* temp = new SampleFrame[audioEngine()->framesPerPeriod()];
 	int_sample_t * outbuf = new int_sample_t[audioEngine()->framesPerPeriod() * channels()];
 
 	while( true )
@@ -188,7 +173,7 @@ AudioSndio::setupWidget::setupWidget( QWidget * _parent ) :
 	form->addRow(tr("Device"), m_device);
 
 	gui::LcdSpinBoxModel * m = new gui::LcdSpinBoxModel( /* this */ );
-	m->setRange( DEFAULT_CHANNELS, SURROUND_CHANNELS );
+	m->setRange(DEFAULT_CHANNELS, DEFAULT_CHANNELS);
 	m->setStep( 2 );
 	m->setValue( ConfigManager::inst()->value( "audiosndio",
 	    "channels" ).toInt() );

@@ -45,6 +45,8 @@ namespace lmms
 
 namespace lmms::gui
 {
+    class PeakIndicator;
+
     constexpr int MIXER_CHANNEL_INNER_BORDER_SIZE = 3;
     constexpr int MIXER_CHANNEL_OUTER_BORDER_SIZE = 1;
 
@@ -90,6 +92,8 @@ namespace lmms::gui
         QColor strokeInnerInactive() const;
         void setStrokeInnerInactive(const QColor& c);
 
+        void reset();
+
     public slots:
         void renameChannel();
         void resetColor();
@@ -104,6 +108,7 @@ namespace lmms::gui
         void moveChannelRight();
 
     private:
+        bool confirmRemoval(int index);
         QString elideName(const QString& name);
         MixerChannel* mixerChannel() const;
         auto isMasterChannel() const -> bool { return m_channelIndex == 0; }
@@ -118,6 +123,7 @@ namespace lmms::gui
         QLabel* m_receiveArrow;
         PixmapButton* m_muteButton;
         PixmapButton* m_soloButton;
+        PeakIndicator* m_peakIndicator = nullptr;
         Fader* m_fader;
         EffectRackView* m_effectRackView;
         MixerView* m_mixerView;

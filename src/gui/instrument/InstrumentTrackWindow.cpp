@@ -44,7 +44,6 @@
 #include "GroupBox.h"
 #include "MixerChannelLcdSpinBox.h"
 #include "GuiApplication.h"
-#include "gui_templates.h"
 #include "Instrument.h"
 #include "InstrumentFunctions.h"
 #include "InstrumentFunctionViews.h"
@@ -93,12 +92,8 @@ InstrumentTrackWindow::InstrumentTrackWindow( InstrumentTrackView * _itv ) :
 	vlayout->setContentsMargins(0, 0, 0, 0);
 	vlayout->setSpacing( 0 );
 
-	auto generalSettingsWidget = new TabWidget(tr("GENERAL SETTINGS"), this);
-
+	auto generalSettingsWidget = new QWidget(this);
 	auto generalSettingsLayout = new QVBoxLayout(generalSettingsWidget);
-
-	generalSettingsLayout->setContentsMargins( 8, 18, 8, 8 );
-	generalSettingsLayout->setSpacing( 6 );
 
 	auto nameAndChangeTrackWidget = new QWidget(generalSettingsWidget);
 	auto nameAndChangeTrackLayout = new QHBoxLayout(nameAndChangeTrackWidget);
@@ -107,7 +102,6 @@ InstrumentTrackWindow::InstrumentTrackWindow( InstrumentTrackView * _itv ) :
 
 	// setup line edit for changing instrument track name
 	m_nameLineEdit = new QLineEdit;
-	m_nameLineEdit->setFont( pointSize<9>( m_nameLineEdit->font() ) );
 	connect( m_nameLineEdit, SIGNAL( textChanged( const QString& ) ),
 				this, SLOT( textChanged( const QString& ) ) );
 
@@ -271,7 +265,7 @@ InstrumentTrackWindow::InstrumentTrackWindow( InstrumentTrackView * _itv ) :
 	m_tabWidget->addTab(m_tuningView, tr("Tuning and transposition"), "tuning_tab", 5);
 	adjustTabSize(m_ssView);
 	adjustTabSize(instrumentFunctions);
-	m_effectView->resize(EffectRackView::DEFAULT_WIDTH, INSTRUMENT_HEIGHT - 4 - 1);
+	// EffectRackView has sizeHint to be QSize(EffectRackView::DEFAULT_WIDTH, INSTRUMENT_HEIGHT - 4 - 1)
 	adjustTabSize(m_midiView);
 	adjustTabSize(m_tuningView);
 
@@ -356,7 +350,7 @@ void InstrumentTrackWindow::modelChanged()
 	m_mixerChannelNumber->setModel( &m_track->m_mixerChannelModel );
 	m_pianoView->setModel( &m_track->m_piano );
 
-	if( m_track->instrument() && m_track->instrument()->flags().testFlag( Instrument::Flag::IsNotBendable ) == false )
+	if (m_track->instrument() && m_track->instrument()->isBendable())
 	{
 		m_pitchKnob->setModel( &m_track->m_pitchModel );
 		m_pitchRangeSpinBox->setModel( &m_track->m_pitchRangeModel );
@@ -374,7 +368,7 @@ void InstrumentTrackWindow::modelChanged()
 		m_pitchRangeLabel->hide();
 	}
 
-	if (m_track->instrument() && m_track->instrument()->flags().testFlag(Instrument::Flag::IsMidiBased))
+	if (m_track->instrument() && m_track->instrument()->isMidiBased())
 	{
 		m_tuningView->microtunerNotSupportedLabel()->show();
 		m_tuningView->microtunerGroupBox()->hide();
@@ -468,7 +462,7 @@ void InstrumentTrackWindow::updateInstrumentView()
 		m_tabWidget->addTab( m_instrumentView, tr( "Plugin" ), "plugin_tab", 0 );
 		m_tabWidget->setActiveTab( 0 );
 
-		m_ssView->setFunctionsHidden( m_track->m_instrument->flags().testFlag( Instrument::Flag::IsSingleStreamed ) );
+		m_ssView->setFunctionsHidden(m_track->m_instrument->isSingleStreamed());
 
 		modelChanged(); 		// Get the instrument window to refresh
 		m_track->dataChanged(); // Get the text on the trackButton to change

@@ -75,7 +75,7 @@ public:
 	~BitInvader() override = default;
 
 	void playNote( NotePlayHandle * _n,
-						sampleFrame * _working_buffer ) override;
+						SampleFrame* _working_buffer ) override;
 	void deleteNotePluginData( NotePlayHandle * _n ) override;
 
 
@@ -85,9 +85,9 @@ public:
 
 	QString nodeName() const override;
 
-	f_cnt_t desiredReleaseFrames() const override
+	float desiredReleaseTimeMs() const override
 	{
-		return( 64 );
+		return 1.5f;
 	}
 
 	gui::PluginView * instantiateView( QWidget * _parent ) override;

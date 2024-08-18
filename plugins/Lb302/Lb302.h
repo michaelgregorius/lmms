@@ -152,9 +152,9 @@ public:
 	Lb302Synth( InstrumentTrack * _instrument_track );
 	~Lb302Synth() override;
 
-	void play( sampleFrame * _working_buffer ) override;
+	void play( SampleFrame* _working_buffer ) override;
 	void playNote( NotePlayHandle * _n,
-						sampleFrame * _working_buffer ) override;
+						SampleFrame* _working_buffer ) override;
 	void deleteNotePluginData( NotePlayHandle * _n ) override;
 
 
@@ -162,16 +162,6 @@ public:
 	void loadSettings( const QDomElement & _this ) override;
 
 	QString nodeName() const override;
-
-	Flags flags() const override
-	{
-		return Flag::IsSingleStreamed;
-	}
-
-	f_cnt_t desiredReleaseFrames() const override
-	{
-		return 0; //4048;
-	}
 
 	gui::PluginView* instantiateView( QWidget * _parent ) override;
 
@@ -230,7 +220,6 @@ private:
 	int   vcf_envpos;       // Update counter. Updates when >= ENVINC
 
 	float vca_attack,       // Amp attack
-	      vca_decay,        // Amp decay
 	      vca_a0,           // Initial amplifier coefficient
 	      vca_a;            // Amplifier coefficient.
 
@@ -257,7 +246,7 @@ private:
 
 	void recalcFilter();
 
-	int process(sampleFrame *outbuf, const int size);
+	int process(SampleFrame* outbuf, const int size);
 
 	friend class gui::Lb302SynthView;
 
