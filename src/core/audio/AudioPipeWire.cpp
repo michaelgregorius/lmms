@@ -26,18 +26,15 @@
 
 #ifdef LMMS_HAVE_PIPEWIRE
 
-// TODO Remove once the sine example code is removed!
-#include <math.h>
+#include "AudioEngine.h"
 
 #include <spa/param/audio/format-utils.h>
 
 #include <QFormLayout>
 #include <QLabel>
 
-// TODO Remove most of this except channels!
-#define M_PI_M2 ( M_PI + M_PI )
-#define DEFAULT_CHANNELS        2
-#define DEFAULT_VOLUME          0.7
+#define DEFAULT_CHANNELS 2
+
 
 namespace lmms
 {
@@ -54,7 +51,8 @@ static const struct pw_stream_events stream_events = {
 };
 
 AudioPipeWire::AudioPipeWire(bool& successful, AudioEngine* audioEngine) :
-	AudioDevice(DEFAULT_CHANNELS, audioEngine)
+	AudioDevice(DEFAULT_CHANNELS, audioEngine),
+	m_outBuffer(new SampleFrame[this->audioEngine()->framesPerPeriod()])
 {
 	pw_init(nullptr, nullptr);
  
@@ -109,6 +107,14 @@ AudioPipeWire::AudioPipeWire(bool& successful, AudioEngine* audioEngine) :
 						static_cast<pw_stream_flags>(PW_STREAM_FLAG_AUTOCONNECT | PW_STREAM_FLAG_MAP_BUFFERS | PW_STREAM_FLAG_RT_PROCESS),
 						params, 1);
 
+	// TODO Negotiate preferred buffer sizes
+	// const auto framesPerPeriod = this->audioEngine()->framesPerPeriod();
+	// params[0] = spa_pod_builder_add_object(&b,
+    // SPA_TYPE_OBJECT_ParamBuffers, SPA_PARAM_Buffers,
+    // SPA_PARAM_BUFFERS_size,    SPA_POD_Int(framesPerPeriod));
+
+	pw_stream_update_params(m_stream, params, 1);
+
 	successful = true;
 }
 
@@ -120,6 +126,8 @@ AudioPipeWire::~AudioPipeWire()
 	pw_context_destroy(m_context);
 	pw_core_disconnect(m_core);
     pw_main_loop_destroy(m_loop);
+
+	delete[] m_outBuffer;
 }
 
 void AudioPipeWire::processStreams()
@@ -138,26 +146,32 @@ void AudioPipeWire::processStreams()
 	float* dst = static_cast<float*>(buf->datas[0].data);
 	if (dst == nullptr) return;
 
-	const int stride = sizeof(float) * DEFAULT_CHANNELS;
-	int n_frames = buf->datas[0].maxsize / stride;
+	const auto stride = sizeof(float) * DEFAULT_CHANNELS;
+	auto n_frames = buf->datas[0].maxsize / stride;
 	if (b->requested)
 	{
 		n_frames = SPA_MIN(b->requested, n_frames);
 	}
 
-	const auto sampleRate = this->sampleRate();
-	for (int i = 0; i < n_frames; ++i)
-	{
-		accumulator += M_PI_M2 * 440 / sampleRate;
-		if (accumulator >= M_PI_M2)
-		{
-			accumulator -= M_PI_M2;
-		}
+	// TODO Handle different frame/buffer sizes!
+	const fpp_t frames = getNextBuffer(m_outBuffer);
 
-		const float val = sin(accumulator) * DEFAULT_VOLUME;
-		for (int c = 0; c < DEFAULT_CHANNELS; ++c)
+	if (n_frames == frames)
+	{
+		for (decltype(n_frames) i = 0; i < n_frames; ++i)
 		{
-			*dst++ = val;
+			const auto & currentSample = m_outBuffer[i];
+
+			*dst++ = currentSample.left();
+			*dst++ = currentSample.right();
+		}
+	}
+	else
+	{
+		for (decltype(n_frames) i = 0; i < n_frames; ++i)
+		{
+			*dst++ = 0;
+			*dst++ = 0;
 		}
 	}
 

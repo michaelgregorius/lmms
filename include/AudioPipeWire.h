@@ -81,8 +81,8 @@ private:
 	// This is a scratch space like buffer that is used by PipeWire to create POD (plain old data) objects on the stack.
 	uint8_t m_podBuilderBuffer[1024];
 
-	// TODO Remove once we are done with the sine test implementation
-	double accumulator = 0;
+	// This is the buffer where LMMS will render the frames in
+	SampleFrame* m_outBuffer = nullptr;
 };
 
 } // namespace lmms
