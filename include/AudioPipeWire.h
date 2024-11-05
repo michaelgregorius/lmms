@@ -32,6 +32,8 @@
 #include "AudioDevice.h"
 #include "AudioDeviceSetupWidget.h"
 
+#include <pipewire/pipewire.h>
+
 #include <QThread>
 
 class QLabel;
@@ -67,6 +69,20 @@ private:
 	void startProcessing() override;
 	void stopProcessing() override;
 	void run() override;
+
+	// TODO Make private or encapsulate better!
+public:
+	// TODO Rename after code works!
+	pw_main_loop* loop = nullptr;
+    pw_stream* stream = nullptr;
+
+	// TODO Remove once we are done with the sine test implementation
+	double accumulator = 0;
+
+	// TODO Rename to something like m_podBuilderBuffer
+	// This is a scratch space like buffer that is used by PipeWire to create POD (plain old data) objects on the stack.
+	// TODO We might not really need this as a member in case we do not create PODs in realtime critical code.
+	uint8_t buffer[1024];
 };
 
 } // namespace lmms
