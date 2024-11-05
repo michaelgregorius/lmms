@@ -36,7 +36,6 @@
 
 // TODO Remove most of this except channels!
 #define M_PI_M2 ( M_PI + M_PI )
-#define DEFAULT_RATE            48000
 #define DEFAULT_CHANNELS        2
 #define DEFAULT_VOLUME          0.7
 
@@ -61,6 +60,28 @@ AudioPipeWire::AudioPipeWire(bool& successful, AudioEngine* audioEngine) :
  
 	m_loop = pw_main_loop_new(nullptr);
 
+	m_context = pw_context_new(pw_main_loop_get_loop(m_loop), NULL /* properties */, 0 /* user_data size */);
+ 
+	m_core = pw_context_connect(m_context, NULL /* properties */, 0 /* user_data size */);
+
+	// Update the sample rate used by LMMS to the one from PipeWire if possible
+	if (m_core)
+	{
+		struct pw_properties const *props = pw_core_get_properties(m_core);
+
+		// Note: there does not seem to be a define for "default.clock.rate"
+		const char* sampleRateStr = pw_properties_get(props, "default.clock.rate");
+		if (sampleRateStr)
+		{
+			const auto sampleRatePipeWire = static_cast<lmms::sample_rate_t>(pw_properties_parse_int(sampleRateStr));
+		
+			if (sampleRatePipeWire != sampleRate())
+			{
+				setSampleRate(sampleRatePipeWire);
+			}
+		}
+	}
+
 	m_stream = pw_stream_new_simple(
 				pw_main_loop_get_loop(m_loop),
 				"LMMS",
@@ -75,12 +96,10 @@ AudioPipeWire::AudioPipeWire(bool& successful, AudioEngine* audioEngine) :
 	const struct spa_pod *params[1];
     struct spa_pod_builder b = SPA_POD_BUILDER_INIT(m_podBuilderBuffer, sizeof(m_podBuilderBuffer));
 
-	// TODO Find out sample rate from PipeWire and set it for LMMS (see AudioJack for an example)
-
 	auto audioInfoRaw = SPA_AUDIO_INFO_RAW_INIT(
-                                .format = SPA_AUDIO_FORMAT_F32,
-								.rate = DEFAULT_RATE,
-                                .channels = DEFAULT_CHANNELS);
+							.format = SPA_AUDIO_FORMAT_F32,
+							.rate = sampleRate(),
+							.channels = DEFAULT_CHANNELS);
 
 	params[0] = spa_format_audio_raw_build(&b, SPA_PARAM_EnumFormat, &audioInfoRaw);
  
@@ -98,6 +117,8 @@ AudioPipeWire::~AudioPipeWire()
 	stopProcessing();
 
 	pw_stream_destroy(m_stream);
+	pw_context_destroy(m_context);
+	pw_core_disconnect(m_core);
     pw_main_loop_destroy(m_loop);
 }
 
@@ -124,8 +145,9 @@ void AudioPipeWire::processStreams()
 	if (b->requested)
 			n_frames = SPA_MIN(b->requested, n_frames);
 
+	const auto sampleRate = this->sampleRate();
 	for (i = 0; i < n_frames; i++) {
-			accumulator += M_PI_M2 * 440 / DEFAULT_RATE;
+			accumulator += M_PI_M2 * 440 / sampleRate;
 			if (accumulator >= M_PI_M2)
 				accumulator -= M_PI_M2;
 

@@ -74,6 +74,8 @@ private:
 
 private:
 	pw_main_loop* m_loop = nullptr;
+	pw_context* m_context = nullptr;
+    pw_core* m_core = nullptr;
     pw_stream* m_stream = nullptr;
 
 	// This is a scratch space like buffer that is used by PipeWire to create POD (plain old data) objects on the stack.
