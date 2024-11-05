@@ -53,6 +53,8 @@ public:
 		return QT_TRANSLATE_NOOP( "AudioDeviceSetupWidget", "PipeWire" );
 	}
 
+	void processStreams();
+
 	class setupWidget : public gui::AudioDeviceSetupWidget
 	{
 	public:
@@ -70,19 +72,15 @@ private:
 	void stopProcessing() override;
 	void run() override;
 
-	// TODO Make private or encapsulate better!
-public:
-	// TODO Rename after code works!
-	pw_main_loop* loop = nullptr;
-    pw_stream* stream = nullptr;
+private:
+	pw_main_loop* m_loop = nullptr;
+    pw_stream* m_stream = nullptr;
+
+	// This is a scratch space like buffer that is used by PipeWire to create POD (plain old data) objects on the stack.
+	uint8_t m_podBuilderBuffer[1024];
 
 	// TODO Remove once we are done with the sine test implementation
 	double accumulator = 0;
-
-	// TODO Rename to something like m_podBuilderBuffer
-	// This is a scratch space like buffer that is used by PipeWire to create POD (plain old data) objects on the stack.
-	// TODO We might not really need this as a member in case we do not create PODs in realtime critical code.
-	uint8_t buffer[1024];
 };
 
 } // namespace lmms
