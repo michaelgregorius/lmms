@@ -124,36 +124,41 @@ AudioPipeWire::~AudioPipeWire()
 
 void AudioPipeWire::processStreams()
 {
-	struct pw_buffer *b;
-	struct spa_buffer *buf;
-	int i, c, n_frames, stride;
-	float *dst, val;
-
-	if ((b = pw_stream_dequeue_buffer(m_stream)) == NULL) {
-			pw_log_warn("out of buffers: %m");
-			return;
+	// Fetch the buffer from the stream
+	struct pw_buffer* b = pw_stream_dequeue_buffer(m_stream);
+	if (b == nullptr)
+	{
+		pw_log_warn("out of buffers: %m");
+		return;
 	}
 
-	buf = b->buffer;
+	const struct spa_buffer* buf = b->buffer;
 
-	dst = static_cast<float*>(buf->datas[0].data);
-
+	// Fetch the destination buffer where we will write the result
+	float* dst = static_cast<float*>(buf->datas[0].data);
 	if (dst == nullptr) return;
 
-	stride = sizeof(float) * DEFAULT_CHANNELS;
-	n_frames = buf->datas[0].maxsize / stride;
+	const int stride = sizeof(float) * DEFAULT_CHANNELS;
+	int n_frames = buf->datas[0].maxsize / stride;
 	if (b->requested)
-			n_frames = SPA_MIN(b->requested, n_frames);
+	{
+		n_frames = SPA_MIN(b->requested, n_frames);
+	}
 
 	const auto sampleRate = this->sampleRate();
-	for (i = 0; i < n_frames; i++) {
-			accumulator += M_PI_M2 * 440 / sampleRate;
-			if (accumulator >= M_PI_M2)
-				accumulator -= M_PI_M2;
+	for (int i = 0; i < n_frames; ++i)
+	{
+		accumulator += M_PI_M2 * 440 / sampleRate;
+		if (accumulator >= M_PI_M2)
+		{
+			accumulator -= M_PI_M2;
+		}
 
-			val = sin(accumulator) * DEFAULT_VOLUME;
-			for (c = 0; c < DEFAULT_CHANNELS; c++)
-					*dst++ = val;
+		const float val = sin(accumulator) * DEFAULT_VOLUME;
+		for (int c = 0; c < DEFAULT_CHANNELS; ++c)
+		{
+			*dst++ = val;
+		}
 	}
 
 	buf->datas[0].chunk->offset = 0;
