@@ -50,6 +50,14 @@ static const struct pw_stream_events stream_events = {
         .process = on_process,
 };
 
+static void fillWithSilence(float* buffer, unsigned long numberOfFrames)
+{
+	for (unsigned long i = 0; i < numberOfFrames * DEFAULT_CHANNELS; ++i)
+	{
+		*buffer++ = 0;
+	}
+}
+
 AudioPipeWire::AudioPipeWire(bool& successful, AudioEngine* audioEngine) :
 	AudioDevice(DEFAULT_CHANNELS, audioEngine),
 	m_outBuffer(new SampleFrame[this->audioEngine()->framesPerPeriod()])
@@ -153,25 +161,28 @@ void AudioPipeWire::processStreams()
 		n_frames = SPA_MIN(b->requested, n_frames);
 	}
 
-	// TODO Handle different frame/buffer sizes!
-	const fpp_t frames = getNextBuffer(m_outBuffer);
-
-	if (n_frames == frames)
+	if (m_stopped)
 	{
-		for (decltype(n_frames) i = 0; i < n_frames; ++i)
-		{
-			const auto & currentSample = m_outBuffer[i];
-
-			*dst++ = currentSample.left();
-			*dst++ = currentSample.right();
-		}
+		fillWithSilence(dst, n_frames);
 	}
 	else
 	{
-		for (decltype(n_frames) i = 0; i < n_frames; ++i)
+		// TODO Handle different frame/buffer sizes!
+		const fpp_t frames = getNextBuffer(m_outBuffer);
+
+		if (n_frames == frames)
 		{
-			*dst++ = 0;
-			*dst++ = 0;
+			for (decltype(n_frames) i = 0; i < n_frames; ++i)
+			{
+				const auto & currentSample = m_outBuffer[i];
+
+				*dst++ = currentSample.left();
+				*dst++ = currentSample.right();
+			}
+		}
+		else
+		{
+			fillWithSilence(dst, n_frames);
 		}
 	}
 
@@ -186,13 +197,15 @@ void AudioPipeWire::startProcessing()
 {
 	if (!isRunning())
 	{
+		m_stopped = false;
 		start(QThread::HighPriority);
 	}
 }
 
 void AudioPipeWire::stopProcessing()
 {
-	// TODO Not tested yet!
+	m_stopped = true;
+
 	pw_main_loop_quit(m_loop);
 
 	stopProcessingThread(this);

@@ -36,6 +36,8 @@
 
 #include <QThread>
 
+#include <atomic>
+
 class QLabel;
 
 namespace lmms
@@ -83,6 +85,8 @@ private:
 
 	// This is the buffer where LMMS will render the frames in
 	SampleFrame* m_outBuffer = nullptr;
+
+	std::atomic<bool> m_stopped = true;
 };
 
 } // namespace lmms
