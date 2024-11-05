@@ -100,6 +100,7 @@ set(LMMS_SRCS
 	core/audio/AudioJack.cpp
 	core/audio/AudioOss.cpp
 	core/audio/AudioSndio.cpp
+	core/audio/AudioPipeWire.cpp
 	core/audio/AudioPort.cpp
 	core/audio/AudioPortAudio.cpp
 	core/audio/AudioSoundIo.cpp

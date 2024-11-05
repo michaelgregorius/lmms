@@ -51,6 +51,7 @@
 #include "AudioDummy.h"
 #include "AudioJack.h"
 #include "AudioOss.h"
+#include "AudioPipeWire.h"
 #include "AudioPortAudio.h"
 #include "AudioPulseAudio.h"
 #include "AudioSdl.h"
@@ -487,6 +488,11 @@ SetupDialog::SetupDialog(ConfigTab tab_to_open) :
 #ifdef LMMS_HAVE_ALSA
 	m_audioIfaceSetupWidgets[AudioAlsa::name()] =
 			new AudioAlsaSetupWidget(as_w);
+#endif
+
+#ifdef LMMS_HAVE_PIPEWIRE
+	m_audioIfaceSetupWidgets[AudioPipeWire::name()] =
+			new AudioPipeWire::setupWidget(as_w);
 #endif
 
 #ifdef LMMS_HAVE_PULSEAUDIO
