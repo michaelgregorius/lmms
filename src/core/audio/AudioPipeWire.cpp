@@ -49,7 +49,7 @@ static void on_process(void *userdata)
 	struct pw_buffer *b;
 	struct spa_buffer *buf;
 	int i, c, n_frames, stride;
-	int16_t *dst, val;
+	float *dst, val;
 
 	if ((b = pw_stream_dequeue_buffer(data->stream)) == NULL) {
 			pw_log_warn("out of buffers: %m");
@@ -58,11 +58,11 @@ static void on_process(void *userdata)
 
 	buf = b->buffer;
 
-	dst = static_cast<int16_t*>(buf->datas[0].data);
+	dst = static_cast<float*>(buf->datas[0].data);
 
 	if (dst == nullptr) return;
 
-	stride = sizeof(int16_t) * DEFAULT_CHANNELS;
+	stride = sizeof(float) * DEFAULT_CHANNELS;
 	n_frames = buf->datas[0].maxsize / stride;
 	if (b->requested)
 			n_frames = SPA_MIN(b->requested, n_frames);
@@ -72,7 +72,7 @@ static void on_process(void *userdata)
 			if (data->accumulator >= M_PI_M2)
 					data->accumulator -= M_PI_M2;
 
-			val = sin(data->accumulator) * DEFAULT_VOLUME * 16767.f;
+			val = sin(data->accumulator) * DEFAULT_VOLUME;
 			for (c = 0; c < DEFAULT_CHANNELS; c++)
 					*dst++ = val;
 	}
@@ -113,8 +113,7 @@ AudioPipeWire::AudioPipeWire(bool& successful, AudioEngine* audioEngine) :
 	// TODO Find out sample rate from PipeWire and set it for LMMS (see AudioJack for an example)
 
 	auto audioInfoRaw = SPA_AUDIO_INFO_RAW_INIT(
-								// TOOD Use 32 bit float
-                                .format = SPA_AUDIO_FORMAT_S16,
+                                .format = SPA_AUDIO_FORMAT_F32,
 								.rate = DEFAULT_RATE,
                                 .channels = DEFAULT_CHANNELS);
 
