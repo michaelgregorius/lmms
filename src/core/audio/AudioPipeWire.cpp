@@ -117,11 +117,15 @@ AudioPipeWire::AudioPipeWire(bool& successful, AudioEngine* audioEngine) :
 
 	// TODO Negotiate preferred buffer sizes
 	// const auto framesPerPeriod = this->audioEngine()->framesPerPeriod();
-	// params[0] = spa_pod_builder_add_object(&b,
-    // SPA_TYPE_OBJECT_ParamBuffers, SPA_PARAM_Buffers,
-    // SPA_PARAM_BUFFERS_size,    SPA_POD_Int(framesPerPeriod));
+	// const auto bufferSize = framesPerPeriod * DEFAULT_CHANNELS * sizeof(float);
 
-	pw_stream_update_params(m_stream, params, 1);
+	// // TODO Rather use a new buffer? It should be copied though I guess.
+    // params[0] = static_cast<spa_pod*>(spa_pod_builder_add_object(&b,
+    //     SPA_TYPE_OBJECT_ParamBuffers, SPA_PARAM_Buffers,
+    //     SPA_PARAM_BUFFERS_size,    SPA_POD_Int(bufferSize)));
+    
+    // // Update stream params
+    // pw_stream_update_params(m_stream, params, 1);
 
 	successful = true;
 }
