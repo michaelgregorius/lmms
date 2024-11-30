@@ -171,22 +171,35 @@ void AudioPipeWire::processStreams()
 	}
 	else
 	{
-		// TODO Handle different frame/buffer sizes!
-		const fpp_t frames = getNextBuffer(m_outBuffer);
-
-		if (n_frames == frames)
+		auto driverFramesNeeded = n_frames;
+		while (driverFramesNeeded > 0)
 		{
-			for (decltype(n_frames) i = 0; i < n_frames; ++i)
+			// Check if we need to refill the local buffer or if we can read data from it
+			const auto canReadData = m_currentReadIndex < static_cast<size_t>(m_framesAvailable);
+			if (!canReadData)
 			{
-				const auto & currentSample = m_outBuffer[i];
-
-				*dst++ = currentSample.left();
-				*dst++ = currentSample.right();
+				m_framesAvailable = getNextBuffer(m_outBuffer);
+				m_currentReadIndex = 0;
 			}
-		}
-		else
-		{
-			fillWithSilence(dst, n_frames);
+			else
+			{
+				// We can only write at most the number of frame we need to write into the PipeWire buffer
+				// or the number of frames we have available. Hence we take the minimum of both values.
+				const auto lmmsFramesAvailable = m_framesAvailable - m_currentReadIndex;
+				const auto framesToWrite = std::min(driverFramesNeeded, lmmsFramesAvailable);
+
+				for (decltype(driverFramesNeeded) i = 0; i < framesToWrite; ++i)
+				{
+					const auto & currentSample = m_outBuffer[m_currentReadIndex];
+
+					*dst++ = currentSample.left();
+					*dst++ = currentSample.right();
+
+					++m_currentReadIndex;
+				}
+
+				driverFramesNeeded -= framesToWrite;
+			}
 		}
 	}
 
