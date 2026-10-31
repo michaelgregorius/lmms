@@ -34,19 +34,16 @@
 #include "AutomationClip.h"
 #include "Clipboard.h"
 #include "ColorChooser.h"
-#include "ComboBoxModel.h"
 #include "DataFile.h"
+#include "DeprecationHelper.h"
 #include "Engine.h"
 #include "embed.h"
 #include "GuiApplication.h"
-#include "InstrumentTrack.h"
-#include "InstrumentTrackView.h"
-#include "MidiClip.h"
+#include "KeyboardShortcuts.h"
+#include "lmms_math.h"
 #include "MidiClipView.h"
-#include "Note.h"
 #include "PatternClip.h"
 #include "PatternStore.h"
-#include "SampleClip.h"
 #include "Song.h"
 #include "SongEditor.h"
 #include "StringPairDrag.h"
@@ -59,27 +56,14 @@ namespace lmms::gui
 {
 
 
-/*! The width of the resize grip in pixels
- */
-const int RESIZE_GRIP_WIDTH = 4;
+//! @brief The default width of the resize grip in pixels
+constexpr int RESIZE_GRIP_WIDTH = 8;
 
+//! @brief The maximum fraction of the clip width that the resize grip is allowed to take up
+constexpr float RESIZE_GRIP_MAX_WIDTH_FRACTION = 0.1f;
 
-/*! A pointer for that text bubble used when moving segments, etc.
- *
- * In a number of situations, LMMS displays a floating text bubble
- * beside the cursor as you move or resize elements of a track about.
- * This pointer keeps track of it, as you only ever need one at a time.
- */
-TextFloat * ClipView::s_textFloat = nullptr;
+TextFloat* ClipView::s_textFloat = nullptr;
 
-
-/*! \brief Create a new ClipView
- *
- *  Creates a new clip view for the given clip in the given track view.
- *
- * \param _clip The clip to be displayed
- * \param _tv  The track view that will contain the new object
- */
 ClipView::ClipView( Clip * clip,
 							TrackView * tv ) :
 	selectableObject( tv->getTrackContentWidget() ),
@@ -100,11 +84,7 @@ ClipView::ClipView( Clip * clip,
 	m_textShadowColor( 0, 0, 0 ),
 	m_patternClipBackground( 0, 0, 0 ),
 	m_gradient( true ),
-	m_mouseHotspotHand( 0, 0 ),
-	m_mouseHotspotKnife( 0, 0 ),
-	m_cursorHand( QCursor( embed::getIconPixmap( "hand" ) ) ),
-	m_cursorKnife( QCursor( embed::getIconPixmap( "cursor_knife" ) ) ),
-	m_cursorSetYet( false ),
+	m_markerColor(0, 0, 0),
 	m_needsUpdate( true )
 {
 	if( s_textFloat == nullptr )
@@ -113,10 +93,9 @@ ClipView::ClipView( Clip * clip,
 		s_textFloat->setPixmap( embed::getIconPixmap( "clock" ) );
 	}
 
-	setAttribute( Qt::WA_OpaquePaintEvent, true );
 	setAttribute( Qt::WA_DeleteOnClose, true );
 	setFocusPolicy( Qt::StrongFocus );
-	setCursor( m_cursorHand );
+	setCursor(Qt::PointingHandCursor);
 	move( 0, 0 );
 	show();
 
@@ -147,11 +126,6 @@ ClipView::ClipView( Clip * clip,
 
 
 
-/*! \brief Destroy a ClipView
- *
- *  Destroys the given ClipView.
- *
- */
 ClipView::~ClipView()
 {
 	delete m_hint;
@@ -163,23 +137,8 @@ ClipView::~ClipView()
 }
 
 
-/*! \brief Update a ClipView
- *
- *  Clip's get drawn only when needed,
- *  and when a Clip is updated,
- *  it needs to be redrawn.
- *
- */
 void ClipView::update()
 {
-	if( !m_cursorSetYet )
-	{
-		m_cursorHand = QCursor( embed::getIconPixmap( "hand" ), m_mouseHotspotHand.width(), m_mouseHotspotHand.height() );
-		m_cursorKnife = QCursor( embed::getIconPixmap( "cursor_knife" ), m_mouseHotspotKnife.width(), m_mouseHotspotKnife.height() );
-		setCursor( m_cursorHand );
-		m_cursorSetYet = true;
-	}
-
 	if( fixedClips() )
 	{
 		updateLength();
@@ -190,13 +149,6 @@ void ClipView::update()
 
 
 
-/*! \brief Does this ClipView have a fixed Clip?
- *
- *  Returns whether the containing trackView has fixed
- *  Clips.
- *
- * \todo In what circumstance are they fixed?
- */
 bool ClipView::fixedClips()
 {
 	return m_trackView->trackContainerView()->fixedClips();
@@ -204,74 +156,7 @@ bool ClipView::fixedClips()
 
 
 
-// qproperty access functions, to be inherited & used by Clipviews
-//! \brief CSS theming qproperty access method
-QColor ClipView::mutedColor() const
-{ return m_mutedColor; }
 
-QColor ClipView::mutedBackgroundColor() const
-{ return m_mutedBackgroundColor; }
-
-QColor ClipView::selectedColor() const
-{ return m_selectedColor; }
-
-QColor ClipView::textColor() const
-{ return m_textColor; }
-
-QColor ClipView::textBackgroundColor() const
-{
-	return m_textBackgroundColor;
-}
-
-QColor ClipView::textShadowColor() const
-{ return m_textShadowColor; }
-
-QColor ClipView::patternClipBackground() const
-{ return m_patternClipBackground; }
-
-bool ClipView::gradient() const
-{ return m_gradient; }
-
-//! \brief CSS theming qproperty access method
-void ClipView::setMutedColor( const QColor & c )
-{ m_mutedColor = QColor( c ); }
-
-void ClipView::setMutedBackgroundColor( const QColor & c )
-{ m_mutedBackgroundColor = QColor( c ); }
-
-void ClipView::setSelectedColor( const QColor & c )
-{ m_selectedColor = QColor( c ); }
-
-void ClipView::setTextColor( const QColor & c )
-{ m_textColor = QColor( c ); }
-
-void ClipView::setTextBackgroundColor( const QColor & c )
-{
-	m_textBackgroundColor = c;
-}
-
-void ClipView::setTextShadowColor( const QColor & c )
-{ m_textShadowColor = QColor( c ); }
-
-void ClipView::setPatternClipBackground( const QColor & c )
-{ m_patternClipBackground = QColor( c ); }
-
-void ClipView::setGradient( const bool & b )
-{ m_gradient = b; }
-
-// access needsUpdate member variable
-bool ClipView::needsUpdate()
-{ return m_needsUpdate; }
-void ClipView::setNeedsUpdate( bool b )
-{ m_needsUpdate = b; }
-
-/*! \brief Close a ClipView
- *
- *  Closes a ClipView by asking the track
- *  view to remove us and then asking the QWidget to close us.
- *
- * \return Boolean state of whether the QWidget was able to close.
- */
 bool ClipView::close()
 {
 	m_trackView->getTrackContentWidget()->removeClipView( this );
@@ -281,13 +166,6 @@ bool ClipView::close()
 
 
 
-/*! \brief Removes a ClipView from its track view.
- *
- *  Like the close() method, this asks the track view to remove this
- *  ClipView.  However, the clip is
- *  scheduled for later deletion rather than closed immediately.
- *
- */
 void ClipView::remove()
 {
 	m_trackView->getTrack()->addJournalCheckPoint();
@@ -306,18 +184,13 @@ void ClipView::remove()
 	// as actually deleting the Clip with the deleteLater function. That being said, it shouldn't
 	// be possible to make a Clip without a Track (i.e., Clip::getTrack is never nullptr).
 	m_clip->deleteLater();
+
+	m_trackView->update();
 }
 
 
 
 
-/*! \brief Updates a ClipView's length
- *
- *  If this ClipView has a fixed Clip, then we must
- *  keep the width of our parent.  Otherwise, calculate our width from
- *  the clip's length in pixels adding in the border.
- *
- */
 void ClipView::updateLength()
 {
 	if( fixedClips() )
@@ -327,7 +200,7 @@ void ClipView::updateLength()
 	else
 	{
 		// this std::max function is needed for clips that do not start or end on the beat, otherwise, they "disappear" when zooming to min 
-		// 3 is the minimun width needed to make a clip visible
+		// 3 is the minimum width needed to make a clip visible
 		setFixedWidth(std::max(static_cast<int>(m_clip->length() * pixelsPerBar() / TimePos::ticksPerBar() + 1), 3));
 	}
 	m_trackView->trackContainerView()->update();
@@ -336,13 +209,6 @@ void ClipView::updateLength()
 
 
 
-/*! \brief Updates a ClipView's position.
- *
- *  Ask our track view to change our position.  Then make sure that the
- *  track view is updated in case this position has changed the track
- *  view's length.
- *
- */
 void ClipView::updatePosition()
 {
 	m_trackView->getTrackContentWidget()->changePosition();
@@ -362,7 +228,7 @@ void ClipView::selectColor()
 
 void ClipView::randomizeColor()
 {
-	setColor(ColorChooser::getPalette(ColorChooser::Palette::Mixer)[std::rand() % 48]);
+	setColor(ColorChooser::getPalette(ColorChooser::Palette::Mixer)[fastRand(48)]);
 }
 
 void ClipView::resetColor()
@@ -370,10 +236,6 @@ void ClipView::resetColor()
 	setColor(std::nullopt);
 }
 
-/*! \brief Change color of all selected clips
- *
- *  \param color The new color.
- */
 void ClipView::setColor(const std::optional<QColor>& color)
 {
 	std::set<Track*> journaledTracks;
@@ -405,14 +267,16 @@ void ClipView::setColor(const std::optional<QColor>& color)
 	Engine::getSong()->setModified();
 }
 
-/*! \brief Change the ClipView's display when something
- *  being dragged enters it.
- *
- *  We need to notify Qt to change our display if something being
- *  dragged has entered our 'airspace'.
- *
- * \param dee The QDragEnterEvent to watch.
- */
+
+
+int ClipView::resizeGripWidth() const
+{
+	const int clipWidth = m_clip->length() * pixelsPerBar() / TimePos::ticksPerBar();
+	return std::clamp(static_cast<int>(std::round(RESIZE_GRIP_MAX_WIDTH_FRACTION * clipWidth)), 1, RESIZE_GRIP_WIDTH);
+}
+
+
+
 void ClipView::dragEnterEvent( QDragEnterEvent * dee )
 {
 	TrackContentWidget * tcw = getTrackView()->getTrackContentWidget();
@@ -432,15 +296,6 @@ void ClipView::dragEnterEvent( QDragEnterEvent * dee )
 
 
 
-/*! \brief Handle something being dropped on this ClipObjectView.
- *
- *  When something has been dropped on this ClipView, and
- *  it's a clip, then use an instance of our dataFile reader
- *  to take the xml of the clip and turn it into something
- *  we can write over our current state.
- *
- * \param de The QDropEvent to handle.
- */
 void ClipView::dropEvent( QDropEvent * de )
 {
 	QString type = StringPairDrag::decodeKey( de );
@@ -486,42 +341,28 @@ void ClipView::dropEvent( QDropEvent * de )
 
 
 
-/* @brief Chooses the correct cursor to be displayed on the widget
- *
- * @param me The QMouseEvent that is triggering the cursor change
- */
 void ClipView::updateCursor(QMouseEvent * me)
 {
-	auto sClip = dynamic_cast<SampleClip*>(m_clip);
-	auto pClip = dynamic_cast<PatternClip*>(m_clip);
+	const auto posX = position(me).x();
 
 	// If we are at the edges, use the resize cursor
-	if (!me->buttons() && !m_clip->getAutoResize() && !isSelected()
-		&& ((me->x() > width() - RESIZE_GRIP_WIDTH) || (me->x() < RESIZE_GRIP_WIDTH && (sClip || pClip))))
+	if (!me->buttons() && m_clip->manuallyResizable() && !isSelected()
+		&& ((posX >= width() - resizeGripWidth()) || (posX < resizeGripWidth())))
 	{
 		setCursor(Qt::SizeHorCursor);
 	}
 	// If we are in the middle on knife mode, use the knife cursor
-	else if (sClip && m_trackView->trackContainerView()->knifeMode() && !isSelected())
+	else if (m_trackView->trackContainerView()->knifeMode() && !isSelected())
 	{
-		setCursor(m_cursorKnife);
+		setCursor(Qt::SplitHCursor);
 	}
 	// If we are in the middle in any other mode, use the hand cursor
-	else { setCursor(m_cursorHand); }
+	else { setCursor(Qt::PointingHandCursor); }
 }
 
 
 
 
-/*! \brief Create a DataFile suitable for copying multiple clips.
- *
- *	Clips in the vector are written to the "clips" node in the
- *  DataFile.  The ClipView's initial mouse position is written
- *  to the "initialMouseX" node in the DataFile.  When dropped on a track,
- *  this is used to create copies of the Clips.
- *
- * \param clips The trackContectObjects to save in a DataFile
- */
 DataFile ClipView::createClipDataFiles(
     				const QVector<ClipView *> & clipViews) const
 {
@@ -593,7 +434,7 @@ void ClipView::paintTextLabel(QString const & text, QPainter & painter)
 		elidedClipName = text.trimmed();
 	}
 
-	painter.fillRect(QRect(0, 0, width(), fontMetrics.height() + 2 * textTop), textBackgroundColor());
+	painter.fillRect(QRect(0, 0, fontMetrics.horizontalAdvance(elidedClipName) + 8, fontMetrics.height() + 2 * textTop), textBackgroundColor());
 
 	int const finalTextTop = textTop + fontMetrics.ascent();
 	painter.setPen(textShadowColor());
@@ -602,38 +443,23 @@ void ClipView::paintTextLabel(QString const & text, QPainter & painter)
 	painter.drawText( textLeft, finalTextTop, elidedClipName );
 }
 
-/*! \brief Handle a mouse press on this ClipView.
- *
- *  Handles the various ways in which a ClipView can be
- *  used with a click of a mouse button.
- *
- *  * If our container supports rubber band selection then handle
- *    selection events.
- *  * or if shift-left button, add this object to the selection
- *  * or if ctrl-left button, start a drag-copy event
- *  * or if just plain left button, resize if we're resizeable
- *  * or if ctrl-middle button, mute the clip
- *  * or if middle button, maybe delete the clip.
- *
- * \param me The QMouseEvent to handle.
- */
 void ClipView::mousePressEvent( QMouseEvent * me )
 {
+	const auto pos = position(me);
+
 	// Right now, active is only used on right/mid clicks actions, so we use a ternary operator
 	// to avoid the overhead of calling getClickedClips when it's not used
 	auto active = me->button() == Qt::LeftButton
 		? QVector<ClipView *>()
 		: getClickedClips();
 
-	setInitialPos( me->pos() );
+	setInitialPos(pos);
 	setInitialOffsets();
 	if( !fixedClips() && me->button() == Qt::LeftButton )
 	{
-		auto sClip = dynamic_cast<SampleClip*>(m_clip);
-		auto pClip = dynamic_cast<PatternClip*>(m_clip);
 		const bool knifeMode = m_trackView->trackContainerView()->knifeMode();
 
-		if ( me->modifiers() & Qt::ControlModifier && !(sClip && knifeMode) )
+		if (me->modifiers() & KBD_COPY_MODIFIER && !knifeMode)
 		{
 			if( isSelected() )
 			{
@@ -662,28 +488,28 @@ void ClipView::mousePressEvent( QMouseEvent * me )
 					m_clip->setJournalling(false);
 				}
 
-				setInitialPos( me->pos() );
+				setInitialPos(pos);
 				setInitialOffsets();
 
-				if( m_clip->getAutoResize() )
+				if (!m_clip->manuallyResizable() && !knifeMode)
 				{	// Always move clips that can't be manually resized
 					m_action = Action::Move;
 					setCursor( Qt::SizeAllCursor );
 				}
-				else if( me->x() >= width() - RESIZE_GRIP_WIDTH )
+				else if (pos.x() >= width() - resizeGripWidth())
 				{
 					m_action = Action::Resize;
 					setCursor( Qt::SizeHorCursor );
 				}
-				else if( me->x() < RESIZE_GRIP_WIDTH && (sClip || pClip) )
+				else if (pos.x() < resizeGripWidth())
 				{
 					m_action = Action::ResizeLeft;
 					setCursor( Qt::SizeHorCursor );
 				}
-				else if( sClip && knifeMode )
+				else if (knifeMode)
 				{
 					m_action = Action::Split;
-					setCursor( m_cursorKnife );
+					setCursor(Qt::SplitHCursor);
 					setMarkerPos( knifeMarkerPos( me ) );
 					setMarkerEnabled( true );
 					update();
@@ -723,10 +549,22 @@ void ClipView::mousePressEvent( QMouseEvent * me )
 			}
 
 			delete m_hint;
-			QString hint = m_action == Action::Move || m_action == Action::MoveSelection
-						? tr( "Press <%1> and drag to make a copy." )
-						: tr( "Press <%1> for free resizing." );
-			m_hint = TextFloat::displayMessage( tr( "Hint" ), hint.arg(UI_CTRL_KEY),
+			QString hint;
+			if (m_action == Action::Move || m_action == Action::MoveSelection)
+			{
+				hint = tr("Press <%1> and drag to make a copy.");
+			}
+			else if (m_action == Action::Split)
+			{
+				hint = dynamic_cast<MidiClipView*>(this)
+					? tr("Press <%1> or <Alt> for unquantized splitting.\nPress <Shift> for destructive splitting.")
+					: tr("Press <%1> or <Alt> for unquantized splitting.");
+			}
+			else
+			{
+				hint = tr("Press <%1> or <Alt> for unquantized resizing.");
+			}
+			m_hint = TextFloat::displayMessage( tr( "Hint" ), hint.arg(UI_COPY_KEY),
 					embed::getIconPixmap( "hint" ), 0 );
 		}
 	}
@@ -743,12 +581,8 @@ void ClipView::mousePressEvent( QMouseEvent * me )
 		if (m_action == Action::Split)
 		{
 			m_action = Action::None;
-			auto sClip = dynamic_cast<SampleClip*>(m_clip);
-			if (sClip)
-			{
-				setMarkerEnabled( false );
-				update();
-			}
+			setMarkerEnabled(false);
+			update();
 		}
 	}
 	else if( me->button() == Qt::MiddleButton )
@@ -767,19 +601,6 @@ void ClipView::mousePressEvent( QMouseEvent * me )
 
 
 
-/*! \brief Handle a mouse movement (drag) on this ClipView.
- *
- *  Handles the various ways in which a ClipView can be
- *  used with a mouse drag.
- *
- *  * If in move mode, move ourselves in the track,
- *  * or if in move-selection mode, move the entire selection,
- *  * or if in resize mode, resize ourselves,
- *  * otherwise ???
- *
- * \param me The QMouseEvent to handle.
- * \todo what does the final else case do here?
- */
 void ClipView::mouseMoveEvent( QMouseEvent * me )
 {
 	if( m_action == Action::CopySelection || m_action == Action::ToggleSelected )
@@ -824,12 +645,13 @@ void ClipView::mouseMoveEvent( QMouseEvent * me )
 		}
 	}
 
-	if( me->modifiers() & Qt::ControlModifier )
+	if (me->modifiers() & KBD_COPY_MODIFIER)
 	{
 		delete m_hint;
 		m_hint = nullptr;
 	}
 
+	const auto pos = position(me);
 	const float ppb = m_trackView->trackContainerView()->pixelsPerBar();
 	if( m_action == Action::Move )
 	{
@@ -882,7 +704,7 @@ void ClipView::mouseMoveEvent( QMouseEvent * me )
 		if( m_action == Action::Resize )
 		{
 			// The clip's new length
-			TimePos l = static_cast<int>( me->x() * TimePos::ticksPerBar() / ppb );
+			TimePos l = static_cast<int>(pos.x() * TimePos::ticksPerBar() / ppb);
 
 			// If the user is holding alt, or pressed ctrl after beginning the drag, don't quantize
 			if ( unquantizedModHeld(me) )
@@ -891,6 +713,7 @@ void ClipView::mouseMoveEvent( QMouseEvent * me )
 				setInitialPos( m_initialMousePos );
 				// Don't resize to less than 1 tick
 				m_clip->changeLength( qMax<int>( 1, l ) );
+				m_clip->setAutoResize(false);
 			}
 			else if ( me->modifiers() & Qt::ShiftModifier )
 			{	// If shift is held, quantize clip's end position
@@ -898,7 +721,13 @@ void ClipView::mouseMoveEvent( QMouseEvent * me )
 				// The end position has to be after the clip's start
 				TimePos min = m_initialClipPos.quantize( snapSize );
 				if ( min <= m_initialClipPos ) min += snapLength;
-				m_clip->changeLength( qMax<int>(min - m_initialClipPos, end - m_initialClipPos) );
+
+				int newLength = qMax<int>(min - m_initialClipPos, end - m_initialClipPos);
+				if (newLength != m_clip->length())
+				{
+					m_clip->changeLength(newLength);
+					m_clip->setAutoResize(false);
+				}
 			}
 			else
 			{	// Otherwise, resize in fixed increments
@@ -907,67 +736,77 @@ void ClipView::mouseMoveEvent( QMouseEvent * me )
 				// Don't resize to less than 1 tick
 				auto min = TimePos(initialLength % snapLength);
 				if (min < 1) min += snapLength;
-				m_clip->changeLength( qMax<int>( min, initialLength + offset) );
+
+				int newLength = qMax<int>(min, initialLength + offset);
+				if (newLength != m_clip->length())
+				{
+					m_clip->changeLength(newLength);
+					m_clip->setAutoResize(false);
+				}
 			}
 		}
 		else
 		{
-			auto sClip = dynamic_cast<SampleClip*>(m_clip);
 			auto pClip = dynamic_cast<PatternClip*>(m_clip);
-			if( sClip || pClip )
+
+			const int x = mapToParent(pos).x() - m_initialMousePos.x();
+
+			TimePos t = qMax( 0, (int)
+								m_trackView->trackContainerView()->currentPosition() +
+								static_cast<int>( x * TimePos::ticksPerBar() / ppb ) );
+
+			if (!isResizableBeforeStart())
 			{
-				const int x = mapToParent( me->pos() ).x() - m_initialMousePos.x();
+				t = std::max(t, static_cast<TimePos>(m_clip->startPosition() + m_clip->startTimeOffset()));
+			}
 
-				TimePos t = qMax( 0, (int)
-									m_trackView->trackContainerView()->currentPosition() +
-									static_cast<int>( x * TimePos::ticksPerBar() / ppb ) );
+			if( unquantizedModHeld(me) )
+			{	// We want to preserve this adjusted offset,
+				// even if the user switches to snapping later
+				setInitialPos( m_initialMousePos );
+				//Don't resize to less than 1 tick
+				t = qMin<int>( m_initialClipEnd - 1, t);
+			}
+			else if( me->modifiers() & Qt::ShiftModifier )
+			{	// If shift is held, quantize clip's start position
+				// Don't let the start position move past the end position
+				TimePos max = m_initialClipEnd.quantize( snapSize );
+				if ( max >= m_initialClipEnd ) max -= snapLength;
+				t = qMin<int>( max, t.quantize( snapSize ) );
+			}
+			else
+			{	// Otherwise, resize in fixed increments
+				// Don't resize to less than 1 tick
+				TimePos initialLength = m_initialClipEnd - m_initialClipPos;
+				auto minLength = TimePos(initialLength % snapLength);
+				if (minLength < 1) minLength += snapLength;
+				TimePos offset = TimePos(t - m_initialClipPos).quantize( snapSize );
+				t = qMin<int>( m_initialClipEnd - minLength, m_initialClipPos + offset );
+			}
 
-				if( unquantizedModHeld(me) )
-				{	// We want to preserve this adjusted offset,
-					// even if the user switches to snapping later
-					setInitialPos( m_initialMousePos );
-					//Don't resize to less than 1 tick
-					t = qMin<int>( m_initialClipEnd - 1, t);
-				}
-				else if( me->modifiers() & Qt::ShiftModifier )
-				{	// If shift is held, quantize clip's start position
-					// Don't let the start position move past the end position
-					TimePos max = m_initialClipEnd.quantize( snapSize );
-					if ( max >= m_initialClipEnd ) max -= snapLength;
-					t = qMin<int>( max, t.quantize( snapSize ) );
+			TimePos positionOffset = m_clip->startPosition() - t;
+			int newLength = m_clip->length() + positionOffset;
+			if (newLength >= 1 && positionOffset != 0)
+			{
+				m_clip->movePosition(t);
+				m_clip->changeLength(newLength);
+				if (pClip)
+				{
+					// Modulus the start time offset as we need it only for offsets
+					// inside the pattern length. This is done to prevent a value overflow.
+					// The start time offset may still become larger than the pattern length
+					// whenever the pattern length decreases without a clip resize following.
+					// To deal safely with it, always modulus before use.
+					tick_t patternLength = Engine::patternStore()->lengthOfPattern(pClip->patternIndex())
+							* TimePos::ticksPerBar();
+					TimePos position = (pClip->startTimeOffset() + positionOffset) % patternLength;
+					pClip->setStartTimeOffset(position);
 				}
 				else
-				{	// Otherwise, resize in fixed increments
-					// Don't resize to less than 1 tick
-					TimePos initialLength = m_initialClipEnd - m_initialClipPos;
-					auto minLength = TimePos(initialLength % snapLength);
-					if (minLength < 1) minLength += snapLength;
-					TimePos offset = TimePos(t - m_initialClipPos).quantize( snapSize );
-					t = qMin<int>( m_initialClipEnd - minLength, m_initialClipPos + offset );
-				}
-
-				TimePos positionOffset = m_clip->startPosition() - t;
-				if (m_clip->length() + positionOffset >= 1)
 				{
-					m_clip->movePosition(t);
-					m_clip->changeLength(m_clip->length() + positionOffset);
-					if (sClip)
-					{
-						sClip->setStartTimeOffset(sClip->startTimeOffset() + positionOffset);
-					}
-					else if (pClip)
-					{
-						// Modulus the start time offset as we need it only for offsets
-						// inside the pattern length. This is done to prevent a value overflow.
-						// The start time offset may still become larger than the pattern length
-						// whenever the pattern length decreases without a clip resize following.
-						// To deal safely with it, always modulus before use.
-						tick_t patternLength = Engine::patternStore()->lengthOfPattern(pClip->patternIndex())
-								* TimePos::ticksPerBar();
-						TimePos position = (pClip->startTimeOffset() + positionOffset) % patternLength;
-						pClip->setStartTimeOffset(position);
-					}
+					m_clip->setStartTimeOffset(m_clip->startTimeOffset() + positionOffset);
 				}
+				m_clip->setAutoResize(false);
 			}
 		}
 		s_textFloat->setText( tr( "%1:%2 (%3:%4 to %5:%6)" ).
@@ -984,11 +823,8 @@ void ClipView::mouseMoveEvent( QMouseEvent * me )
 	}
 	else if( m_action == Action::Split )
 	{
-		auto sClip = dynamic_cast<SampleClip*>(m_clip);
-		if (sClip) {
-			setCursor( m_cursorKnife );
-			setMarkerPos( knifeMarkerPos( me ) );
-		}
+		setCursor(Qt::SplitHCursor);
+		setMarkerPos(knifeMarkerPos(me));
 		update();
 	}
 	// None of the actions above, we will just handle the cursor
@@ -998,13 +834,6 @@ void ClipView::mouseMoveEvent( QMouseEvent * me )
 
 
 
-/*! \brief Handle a mouse release on this ClipView.
- *
- *  If we're in move or resize mode, journal the change as appropriate.
- *  Then tidy up.
- *
- * \param me The QMouseEvent to handle.
- */
 void ClipView::mouseReleaseEvent( QMouseEvent * me )
 {
 	// If the Action::CopySelection was chosen as the action due to mouse movement,
@@ -1024,11 +853,16 @@ void ClipView::mouseReleaseEvent( QMouseEvent * me )
 	else if( m_action == Action::Split )
 	{
 		const float ppb = m_trackView->trackContainerView()->pixelsPerBar();
-		const TimePos relPos = me->pos().x() * TimePos::ticksPerBar() / ppb;
-		splitClip(unquantizedModHeld(me) ?
-			relPos :
-			quantizeSplitPos(relPos, me->modifiers() & Qt::ShiftModifier)
-		);
+		const TimePos relPos = position(me).x() * TimePos::ticksPerBar() / ppb;
+		if (me->modifiers() & Qt::ShiftModifier)
+		{
+			destructiveSplitClip(unquantizedModHeld(me) ? relPos : quantizeSplitPos(relPos));
+		}
+		else
+		{
+			splitClip(unquantizedModHeld(me) ? relPos : quantizeSplitPos(relPos));
+		}
+		setMarkerEnabled(false);
 	}
 
 	m_action = Action::None;
@@ -1042,13 +876,6 @@ void ClipView::mouseReleaseEvent( QMouseEvent * me )
 
 
 
-/*! \brief Set up the context menu for this ClipView.
- *
- *  Set up the various context menu events that can apply to a
- *  ClipView.
- *
- * \param cme The QContextMenuEvent to add the actions to.
- */
 void ClipView::contextMenuEvent( QContextMenuEvent * cme )
 {
 	QVector<ClipView*> selectedClips = getClickedClips();
@@ -1081,15 +908,6 @@ void ClipView::contextMenuEvent( QContextMenuEvent * cme )
 				? tr("Cut")
 				: tr("Cut selection"),
 			[this](){ contextMenuAction( ContextMenuAction::Cut ); } );
-
-		if (canMergeSelection(selectedClips))
-		{
-			contextMenu.addAction(
-				embed::getIconPixmap("edit_merge"),
-				tr("Merge Selection"),
-				[this]() { contextMenuAction(ContextMenuAction::Merge); }
-			);
-		}
 	}
 
 	contextMenu.addAction(
@@ -1099,10 +917,16 @@ void ClipView::contextMenuEvent( QContextMenuEvent * cme )
 			: tr("Copy selection"),
 		[this](){ contextMenuAction( ContextMenuAction::Copy ); } );
 
-	contextMenu.addAction(
-		embed::getIconPixmap( "edit_paste" ),
-		tr( "Paste" ),
-		[this](){ contextMenuAction( ContextMenuAction::Paste ); } );
+	auto pasteAction = contextMenu.addAction(
+		embed::getIconPixmap("edit_paste"),
+		tr("Paste"),
+		[this](){ contextMenuAction(ContextMenuAction::Paste); }
+	);
+
+	pasteAction->setEnabled(
+		Clipboard::hasFormat(Clipboard::MimeType::StringPair) && getTrackView()->getTrackContentWidget()
+			->canPasteSelection(m_clip->startPosition(), Clipboard::getMimeData())
+	);
 
 	contextMenu.addSeparator();
 
@@ -1121,6 +945,12 @@ void ClipView::contextMenuEvent( QContextMenuEvent * cme )
 	colorMenu.addAction(tr("Reset"), this, SLOT(resetColor()));
 	colorMenu.addAction(tr("Pick random"), this, SLOT(randomizeColor()));
 	contextMenu.addMenu(&colorMenu);
+
+	contextMenu.addAction(
+		m_clip->getAutoResize() ? embed::getIconPixmap("auto_resize_disable") : embed::getIconPixmap("auto_resize"),
+		m_clip->getAutoResize() ? tr("Disable auto-resize") : tr("Enable auto-resize"),
+		this, &ClipView::toggleSelectedAutoResize
+	);
 
 	constructContextMenu( &contextMenu );
 
@@ -1149,9 +979,6 @@ void ClipView::contextMenuAction( ContextMenuAction action )
 			break;
 		case ContextMenuAction::Mute:
 			toggleMute( active );
-			break;
-		case ContextMenuAction::Merge:
-			mergeClips(active);
 			break;
 	}
 }
@@ -1236,113 +1063,25 @@ void ClipView::toggleMute( QVector<ClipView *> clipvs )
 	}
 }
 
-bool ClipView::canMergeSelection(QVector<ClipView*> clipvs)
+void ClipView::toggleSelectedAutoResize()
 {
-	// Can't merge a single Clip
-	if (clipvs.size() < 2) { return false; }
-
-	// We check if the owner of the first Clip is an Instrument Track
-	bool isInstrumentTrack = dynamic_cast<InstrumentTrackView*>(clipvs.at(0)->getTrackView());
-
-	// Then we create a set with all the Clips owners
-	std::set<TrackView*> ownerTracks;
-	for (auto clipv: clipvs) { ownerTracks.insert(clipv->getTrackView()); }
-
-	// Can merge if there's only one owner track and it's an Instrument Track
-	return isInstrumentTrack && ownerTracks.size() == 1;
+	const bool newState = !m_clip->getAutoResize();
+	std::set<Track*> journaledTracks;
+	for (auto clipv: getClickedClips())
+	{
+		Clip* clip = clipv->getClip();
+		if (journaledTracks.insert(clip->getTrack()).second) { clip->getTrack()->addJournalCheckPoint(); }
+		clip->setAutoResize(newState);
+		clip->updateLength();
+	}
 }
 
-void ClipView::mergeClips(QVector<ClipView*> clipvs)
-{
-	// Get the track that we are merging Clips in
-	auto track = dynamic_cast<InstrumentTrack*>(clipvs.at(0)->getTrackView()->getTrack());
-
-	if (!track)
-	{
-		qWarning("Warning: Couldn't retrieve InstrumentTrack in mergeClips()");
-		return;
-	}
-
-	// For Undo/Redo
-	track->addJournalCheckPoint();
-	track->saveJournallingState(false);
-
-	// Find the earliest position of all the selected ClipVs
-	const auto earliestClipV = std::min_element(clipvs.constBegin(), clipvs.constEnd(),
-		[](ClipView* a, ClipView* b)
-		{
-			return a->getClip()->startPosition() <
-				b->getClip()->startPosition();
-		}
-	);
-
-	const TimePos earliestPos = (*earliestClipV)->getClip()->startPosition();
-
-	// Create a clip where all notes will be added
-	auto newMidiClip = dynamic_cast<MidiClip*>(track->createClip(earliestPos));
-	if (!newMidiClip)
-	{
-		qWarning("Warning: Failed to convert Clip to MidiClip on mergeClips");
-		return;
-	}
-
-	newMidiClip->saveJournallingState(false);
-
-	// Add the notes and remove the Clips that are being merged
-	for (auto clipv: clipvs)
-	{
-		// Convert ClipV to MidiClipView
-		auto mcView = dynamic_cast<MidiClipView*>(clipv);
-
-		if (!mcView)
-		{
-			qWarning("Warning: Non-MidiClip Clip on InstrumentTrack");
-			continue;
-		}
-
-		const NoteVector& currentClipNotes = mcView->getMidiClip()->notes();
-		TimePos mcViewPos = mcView->getMidiClip()->startPosition();
-
-		for (Note* note: currentClipNotes)
-		{
-			Note* newNote = newMidiClip->addNote(*note, false);
-			TimePos originalNotePos = newNote->pos();
-			newNote->setPos(originalNotePos + (mcViewPos - earliestPos));
-		}
-
-		// We disable the journalling system before removing, so the
-		// removal doesn't get added to the undo/redo history
-		clipv->getClip()->saveJournallingState(false);
-		// No need to check for nullptr because we check while building the clipvs QVector
-		clipv->remove();
-	}
-
-	// Update length since we might have moved notes beyond the end of the MidiClip length
-	newMidiClip->updateLength();
-	// Rearrange notes because we might have moved them
-	newMidiClip->rearrangeAllNotes();
-	// Restore journalling states now that the operation is finished
-	newMidiClip->restoreJournallingState();
-	track->restoreJournallingState();
-	// Update song
-	Engine::getSong()->setModified();
-	getGUI()->songEditor()->update();
-}
-
-
-
-
-/*! \brief How many pixels a bar takes for this ClipView.
- *
- * \return the number of pixels per bar.
- */
-float ClipView::pixelsPerBar()
+float ClipView::pixelsPerBar() const
 {
 	return m_trackView->trackContainerView()->pixelsPerBar();
 }
 
 
-/*! \brief Save the offsets between all selected tracks and a clicked track */
 void ClipView::setInitialOffsets()
 {
 	QVector<selectableObject *> so = m_trackView->trackContainerView()->selectedObjects();
@@ -1363,14 +1102,9 @@ void ClipView::setInitialOffsets()
 
 
 
-/*! \brief Detect whether the mouse moved more than n pixels on screen.
- *
- * \param _me The QMouseEvent.
- * \param distance The threshold distance that the mouse has moved to return true.
- */
 bool ClipView::mouseMovedDistance( QMouseEvent * me, int distance )
 {
-	QPoint dPos = mapToGlobal( me->pos() ) - m_initialMouseGlobalPos;
+	QPoint dPos = mapToGlobal(position(me)) - m_initialMouseGlobalPos;
 	const int pixelsMoved = dPos.manhattanLength();
 	return ( pixelsMoved > distance || pixelsMoved < -distance );
 }
@@ -1386,17 +1120,12 @@ bool ClipView::unquantizedModHeld( QMouseEvent * me )
 
 
 
-/*! \brief Calculate the new position of a dragged Clip from a mouse event
- *
- *
- * \param me The QMouseEvent
- */
 TimePos ClipView::draggedClipPos( QMouseEvent * me )
 {
 	//Pixels per bar
 	const float ppb = m_trackView->trackContainerView()->pixelsPerBar();
 	// The pixel distance that the mouse has moved
-	const int mouseOff = mapToGlobal(me->pos()).x() - m_initialMouseGlobalPos.x();
+	const int mouseOff = mapToGlobal(position(me)).x() - m_initialMouseGlobalPos.x();
 	TimePos newPos = m_initialClipPos + mouseOff * TimePos::ticksPerBar() / ppb;
 	TimePos offset = newPos - m_initialClipPos;
 	// If the user is holding alt, or pressed ctrl after beginning the drag, don't quantize
@@ -1414,7 +1143,7 @@ TimePos ClipView::draggedClipPos( QMouseEvent * me )
 		endQ = endQ - m_clip->length();
 
 		// Select the position closest to actual position
-		if ( abs(newPos - startQ) < abs(newPos - endQ) ) newPos = startQ;
+		if (std::abs(newPos - startQ) < std::abs(newPos - endQ)) { newPos = startQ; }
 		else newPos = endQ;
 	}
 	else
@@ -1428,7 +1157,7 @@ TimePos ClipView::draggedClipPos( QMouseEvent * me )
 int ClipView::knifeMarkerPos( QMouseEvent * me )
 {
 	//Position relative to start of clip
-	const int markerPos = me->pos().x();
+	const int markerPos = position(me).x();
 
 	//In unquantized mode, we don't have to mess with the position at all
 	if ( unquantizedModHeld(me) ) { return markerPos; }
@@ -1438,7 +1167,7 @@ int ClipView::knifeMarkerPos( QMouseEvent * me )
 		const float ppb = m_trackView->trackContainerView()->pixelsPerBar();
 		TimePos midiPos = markerPos * TimePos::ticksPerBar() / ppb;
 		//2: Snap to the correct position, based on modifier keys
-		midiPos = quantizeSplitPos( midiPos, me->modifiers() & Qt::ShiftModifier );
+		midiPos = quantizeSplitPos(midiPos);
 		//3: Convert back to a pixel position
 		return midiPos * ppb / TimePos::ticksPerBar();
 	}
@@ -1447,23 +1176,20 @@ int ClipView::knifeMarkerPos( QMouseEvent * me )
 
 
 
-TimePos ClipView::quantizeSplitPos( TimePos midiPos, bool shiftMode )
+TimePos ClipView::quantizeSplitPos(TimePos midiPos)
 {
 	const float snapSize = getGUI()->songEditor()->m_editor->getSnapSize();
-	if ( shiftMode )
-	{	//If shift is held we quantize the length of the new left clip...
-		const TimePos leftPos = midiPos.quantize( snapSize );
-		//...or right clip...
-		const TimePos rightOff = m_clip->length() - midiPos;
-		const TimePos rightPos = m_clip->length() - rightOff.quantize( snapSize );
-		//...whichever gives a position closer to the cursor
-		if ( abs(leftPos - midiPos) < abs(rightPos - midiPos) ) { return leftPos; }
-		else { return rightPos; }
-	}
-	else
-	{
-		return TimePos(midiPos + m_initialClipPos).quantize( snapSize ) - m_initialClipPos;
-	}
+	// quantize the length of the new left clip...
+	const TimePos leftPos = midiPos.quantize(snapSize);
+	//...or right clip...
+	const TimePos rightOff = m_clip->length() - midiPos;
+	const TimePos rightPos = m_clip->length() - rightOff.quantize(snapSize);
+	//...or the global gridlines
+	const TimePos globalPos = TimePos(midiPos + m_initialClipPos).quantize(snapSize) - m_initialClipPos;
+	//...whichever gives a position closer to the cursor
+	if (abs(leftPos - midiPos) <= abs(rightPos - midiPos) && abs(leftPos - midiPos) <= abs(globalPos - midiPos)) { return leftPos; }
+	else if (abs(rightPos - midiPos) <= abs(leftPos - midiPos) && abs(rightPos - midiPos) <= abs(globalPos - midiPos)) { return rightPos; }
+	else { return globalPos; }
 }
 
 
@@ -1511,6 +1237,32 @@ QColor ClipView::getColorForDisplay( QColor defaultColor )
 auto ClipView::hasCustomColor() const -> bool
 {
 	return m_clip->color().has_value() || m_clip->getTrack()->color().has_value();
+}
+
+bool ClipView::splitClip(const TimePos pos)
+{
+	const TimePos splitPos = m_initialClipPos + pos;
+
+	// Don't split if we slid off the Clip or if we're on the clip's start/end
+	// Cutting at exactly the start/end position would create a zero length
+	// clip (bad), and a clip the same length as the original one (pointless).
+	if (splitPos <= m_initialClipPos || splitPos >= m_initialClipEnd) { return false; }
+
+	m_clip->getTrack()->addJournalCheckPoint();
+	m_clip->getTrack()->saveJournallingState(false);
+
+	auto rightClip = m_clip->clone();
+
+	m_clip->changeLength(splitPos - m_initialClipPos);
+	m_clip->setAutoResize(false);
+
+	rightClip->movePosition(splitPos);
+	rightClip->changeLength(m_initialClipEnd - splitPos);
+	rightClip->setStartTimeOffset(m_clip->startTimeOffset() - m_clip->length());
+	rightClip->setAutoResize(false);
+
+	m_clip->getTrack()->restoreJournallingState();
+	return true;
 }
 
 } // namespace lmms::gui

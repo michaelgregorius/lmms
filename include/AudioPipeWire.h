@@ -34,16 +34,14 @@
 
 #include <pipewire/pipewire.h>
 
-#include <QThread>
-
-#include <atomic>
+#include <QObject>
 
 class QLabel;
 
 namespace lmms
 {
 
-class AudioPipeWire : public QThread, public AudioDevice
+class AudioPipeWire : public QObject, public AudioDevice
 {
 	Q_OBJECT
 public:
@@ -70,25 +68,17 @@ public:
 	};
 
 private:
-	void startProcessing() override;
-	void stopProcessing() override;
-	void run() override;
+	void startProcessingImpl() override;
+	void stopProcessingImpl() override;
 
 private:
-	pw_main_loop* m_loop = nullptr;
+	pw_thread_loop* m_loop = nullptr;
 	pw_context* m_context = nullptr;
     pw_core* m_core = nullptr;
     pw_stream* m_stream = nullptr;
 
 	// This is a scratch space like buffer that is used by PipeWire to create POD (plain old data) objects on the stack.
 	uint8_t m_podBuilderBuffer[1024];
-
-	// Everything related to the buffer into which  LMMS will render the frames
-	fpp_t m_framesAvailable = 0;
-	size_t m_currentReadIndex = 0;
-	SampleFrame* m_outBuffer = nullptr;
-
-	std::atomic<bool> m_stopped = true;
 };
 
 } // namespace lmms

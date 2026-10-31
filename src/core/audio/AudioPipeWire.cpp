@@ -46,7 +46,7 @@ static void on_process(void *userdata)
 }
 
 static const struct pw_stream_events stream_events = {
-        PW_VERSION_STREAM_EVENTS,
+        .version = PW_VERSION_STREAM_EVENTS,
         .process = on_process,
 };
 
@@ -59,14 +59,13 @@ static void fillWithSilence(float* buffer, unsigned long numberOfFrames)
 }
 
 AudioPipeWire::AudioPipeWire(bool& successful, AudioEngine* audioEngine) :
-	AudioDevice(DEFAULT_CHANNELS, audioEngine),
-	m_outBuffer(new SampleFrame[this->audioEngine()->framesPerPeriod()])
+	AudioDevice(DEFAULT_CHANNELS, audioEngine)
 {
 	pw_init(nullptr, nullptr);
  
-	m_loop = pw_main_loop_new(nullptr);
+	m_loop = pw_thread_loop_new("LMMS", nullptr);
 
-	m_context = pw_context_new(pw_main_loop_get_loop(m_loop), NULL /* properties */, 0 /* user_data size */);
+	m_context = pw_context_new(pw_thread_loop_get_loop(m_loop), NULL /* properties */, 0 /* user_data size */);
  
 	m_core = pw_context_connect(m_context, NULL /* properties */, 0 /* user_data size */);
 
@@ -89,7 +88,7 @@ AudioPipeWire::AudioPipeWire(bool& successful, AudioEngine* audioEngine) :
 	}
 
 	m_stream = pw_stream_new_simple(
-				pw_main_loop_get_loop(m_loop),
+				pw_thread_loop_get_loop(m_loop),
 				"LMMS",
 				pw_properties_new(
 					PW_KEY_MEDIA_TYPE, "Audio",
@@ -135,11 +134,9 @@ AudioPipeWire::~AudioPipeWire()
 	stopProcessing();
 
 	pw_stream_destroy(m_stream);
-	pw_context_destroy(m_context);
 	pw_core_disconnect(m_core);
-    pw_main_loop_destroy(m_loop);
-
-	delete[] m_outBuffer;
+	pw_context_destroy(m_context);
+	pw_thread_loop_destroy(m_loop);
 }
 
 void AudioPipeWire::processStreams()
@@ -165,42 +162,13 @@ void AudioPipeWire::processStreams()
 		n_frames = SPA_MIN(b->requested, n_frames);
 	}
 
-	if (m_stopped)
+	if (!AudioDevice::isRunning())
 	{
 		fillWithSilence(dst, n_frames);
 	}
 	else
 	{
-		auto driverFramesNeeded = n_frames;
-		while (driverFramesNeeded > 0)
-		{
-			// Check if we need to refill the local buffer or if we can read data from it
-			const auto canReadData = m_currentReadIndex < static_cast<size_t>(m_framesAvailable);
-			if (!canReadData)
-			{
-				m_framesAvailable = getNextBuffer(m_outBuffer);
-				m_currentReadIndex = 0;
-			}
-			else
-			{
-				// We can only write at most the number of frame we need to write into the PipeWire buffer
-				// or the number of frames we have available. Hence we take the minimum of both values.
-				const auto lmmsFramesAvailable = m_framesAvailable - m_currentReadIndex;
-				const auto framesToWrite = std::min(driverFramesNeeded, lmmsFramesAvailable);
-
-				for (decltype(driverFramesNeeded) i = 0; i < framesToWrite; ++i)
-				{
-					const auto & currentSample = m_outBuffer[m_currentReadIndex];
-
-					*dst++ = currentSample.left();
-					*dst++ = currentSample.right();
-
-					++m_currentReadIndex;
-				}
-
-				driverFramesNeeded -= framesToWrite;
-			}
-		}
+		audioEngine()->renderNextBuffer({dst, channels(), static_cast<f_cnt_t>(n_frames)});
 	}
 
 	buf->datas[0].chunk->offset = 0;
@@ -210,27 +178,14 @@ void AudioPipeWire::processStreams()
 	pw_stream_queue_buffer(m_stream, b);
 }
 
-void AudioPipeWire::startProcessing()
+void AudioPipeWire::startProcessingImpl()
 {
-	if (!isRunning())
-	{
-		m_stopped = false;
-		start(QThread::HighPriority);
-	}
+	pw_thread_loop_start(m_loop);
 }
 
-void AudioPipeWire::stopProcessing()
+void AudioPipeWire::stopProcessingImpl()
 {
-	m_stopped = true;
-
-	pw_main_loop_quit(m_loop);
-
-	stopProcessingThread(this);
-}
-
-void AudioPipeWire::run()
-{
-	pw_main_loop_run(m_loop);
+	pw_thread_loop_stop(m_loop);
 }
 
 AudioPipeWire::setupWidget::setupWidget( QWidget * _parent ) :

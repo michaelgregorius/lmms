@@ -74,7 +74,11 @@ private:
 	QPixmap m_paintPixmap;
 	
 	QStaticText m_staticTextName;
+
+	//! @brief Preserves the auto points over different scale
 	void scaleTimemapToFit( float oldMin, float oldMax );
+	
+	bool isResizableBeforeStart() override { return false; }
 } ;
 
 
