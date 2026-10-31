@@ -27,11 +27,17 @@
 #ifdef LMMS_HAVE_PIPEWIRE
 
 #include "AudioEngine.h"
+#include "ConfigManager.h"
 
 #include <spa/param/audio/format-utils.h>
 
+#include <QAction>
 #include <QFormLayout>
-#include <QLabel>
+#include <QMenu>
+#include <QToolButton>
+
+#include <algorithm>
+#include <cstring>
 
 #define DEFAULT_CHANNELS 2
 
@@ -39,15 +45,164 @@
 namespace lmms
 {
 
+namespace
+{
+
+const auto audioPipeWireClass = QString{"audiopipewire"};
+const auto outputKey = QString{"output"};
+const auto inputKey = QString{"input"};
+
+// An empty output selects the default device; an empty or "-" input disables capture.
+const auto disconnectedRepresentation = QString{"-"};
+const char* const nodeNameProperty = "nodeName";
+
+struct NodeEntry
+{
+	QString name;
+	QString description;
+};
+
+struct NodeLists
+{
+	std::vector<NodeEntry> sinks;
+	std::vector<NodeEntry> sources;
+};
+
+struct EnumerationData
+{
+	pw_main_loop* loop = nullptr;
+	NodeLists nodes;
+	int pendingSeq = 0;
+};
+
+void onRegistryGlobal(void* userdata, uint32_t /*id*/, uint32_t /*permissions*/, const char* type, uint32_t /*version*/, const spa_dict* props)
+{
+	if (props == nullptr || std::strcmp(type, PW_TYPE_INTERFACE_Node) != 0) { return; }
+
+	const char* mediaClass = spa_dict_lookup(props, PW_KEY_MEDIA_CLASS);
+	const char* name = spa_dict_lookup(props, PW_KEY_NODE_NAME);
+	if (mediaClass == nullptr || name == nullptr) { return; }
+
+	const char* description = spa_dict_lookup(props, PW_KEY_NODE_DESCRIPTION);
+	NodeEntry entry{QString::fromUtf8(name), QString::fromUtf8(description != nullptr ? description : name)};
+
+	auto data = static_cast<EnumerationData*>(userdata);
+	if (std::strcmp(mediaClass, "Audio/Sink") == 0) { data->nodes.sinks.push_back(entry); }
+	else if (std::strcmp(mediaClass, "Audio/Source") == 0) { data->nodes.sources.push_back(entry); }
+}
+
+void onCoreDone(void* userdata, uint32_t id, int seq)
+{
+	auto data = static_cast<EnumerationData*>(userdata);
+	if (id == PW_ID_CORE && seq == data->pendingSeq) { pw_main_loop_quit(data->loop); }
+}
+
+// Returns empty lists if no PipeWire daemon is reachable.
+NodeLists listAudioNodes()
+{
+	pw_init(nullptr, nullptr);
+
+	EnumerationData data;
+	data.loop = pw_main_loop_new(nullptr);
+	auto context = pw_context_new(pw_main_loop_get_loop(data.loop), nullptr, 0);
+	auto core = pw_context_connect(context, nullptr, 0);
+
+	if (core != nullptr)
+	{
+		spa_hook coreListener{};
+		spa_hook registryListener{};
+
+		static const pw_core_events coreEvents = {
+			.version = PW_VERSION_CORE_EVENTS,
+			.done = onCoreDone,
+		};
+		static const pw_registry_events registryEvents = {
+			.version = PW_VERSION_REGISTRY_EVENTS,
+			.global = onRegistryGlobal,
+		};
+
+		pw_core_add_listener(core, &coreListener, &coreEvents, &data);
+		auto registry = pw_core_get_registry(core, PW_VERSION_REGISTRY, 0);
+		pw_registry_add_listener(registry, &registryListener, &registryEvents, &data);
+
+		data.pendingSeq = pw_core_sync(core, PW_ID_CORE, 0);
+		pw_main_loop_run(data.loop);
+
+		spa_hook_remove(&registryListener);
+		spa_hook_remove(&coreListener);
+		pw_proxy_destroy(reinterpret_cast<pw_proxy*>(registry));
+		pw_core_disconnect(core);
+	}
+
+	pw_context_destroy(context);
+	pw_main_loop_destroy(data.loop);
+
+	auto byDescription = [](const NodeEntry& a, const NodeEntry& b) { return a.description < b.description; };
+	std::sort(data.nodes.sinks.begin(), data.nodes.sinks.end(), byDescription);
+	std::sort(data.nodes.sources.begin(), data.nodes.sources.end(), byDescription);
+
+	return data.nodes;
+}
+
+QToolButton* buildDeviceButton(QWidget* parent, const QString& currentNodeName, const QString& emptyLabel,
+	const std::vector<NodeEntry>& entries)
+{
+	auto toolButton = new QToolButton(parent);
+	toolButton->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
+	toolButton->setPopupMode(QToolButton::InstantPopup);
+
+	auto select = [toolButton, emptyLabel](const QString& nodeName, const QString& label)
+	{
+		toolButton->setProperty(nodeNameProperty, nodeName);
+		toolButton->setText(nodeName.isEmpty() ? emptyLabel : label);
+	};
+
+	auto menu = new QMenu(toolButton);
+
+	auto emptyAction = menu->addAction(emptyLabel);
+	QObject::connect(emptyAction, &QAction::triggered, toolButton, [select]() { select(QString{}, QString{}); });
+
+	select(QString{}, QString{});
+	for (const auto& entry : entries)
+	{
+		auto action = menu->addAction(entry.description);
+		QObject::connect(action, &QAction::triggered, toolButton, [select, entry]() { select(entry.name, entry.description); });
+
+		if (entry.name == currentNodeName) { select(entry.name, entry.description); }
+	}
+
+	// Keep a saved device selected even if it is currently not available
+	if (!currentNodeName.isEmpty() && toolButton->property(nodeNameProperty).toString().isEmpty())
+	{
+		select(currentNodeName, currentNodeName);
+	}
+
+	toolButton->setMenu(menu);
+	return toolButton;
+}
+
+} // namespace
+
 static void on_process(void *userdata)
 {
 	AudioPipeWire* data = static_cast<AudioPipeWire*>(userdata);
 	data->processStreams();
 }
 
+static void on_capture_process(void *userdata)
+{
+	AudioPipeWire* data = static_cast<AudioPipeWire*>(userdata);
+	data->processCapture();
+}
+
 static const struct pw_stream_events stream_events = {
         .version = PW_VERSION_STREAM_EVENTS,
         .process = on_process,
+};
+
+static const struct pw_stream_events capture_stream_events = {
+        .version = PW_VERSION_STREAM_EVENTS,
+        .process = on_capture_process,
 };
 
 static void fillWithSilence(float* buffer, unsigned long numberOfFrames)
@@ -59,8 +214,11 @@ static void fillWithSilence(float* buffer, unsigned long numberOfFrames)
 }
 
 AudioPipeWire::AudioPipeWire(bool& successful, AudioEngine* audioEngine) :
-	AudioDevice(DEFAULT_CHANNELS, audioEngine)
+	AudioDevice(DEFAULT_CHANNELS, audioEngine),
+	m_captureBuffer(this->audioEngine()->framesPerAudioBuffer())
 {
+	m_supportsCapture = true;
+
 	pw_init(nullptr, nullptr);
  
 	m_loop = pw_thread_loop_new("LMMS", nullptr);
@@ -87,14 +245,24 @@ AudioPipeWire::AudioPipeWire(bool& successful, AudioEngine* audioEngine) :
 		}
 	}
 
-	m_stream = pw_stream_new_simple(
-				pw_thread_loop_get_loop(m_loop),
-				"LMMS",
-				pw_properties_new(
+	const auto cm = ConfigManager::inst();
+	const auto outputNode = cm->value(audioPipeWireClass, outputKey).toUtf8();
+	const auto inputNode = cm->value(audioPipeWireClass, inputKey).toUtf8();
+
+	auto playbackProps = pw_properties_new(
 					PW_KEY_MEDIA_TYPE, "Audio",
 					PW_KEY_MEDIA_CATEGORY, "Playback",
 					PW_KEY_MEDIA_ROLE, "Music",
-					NULL),
+					NULL);
+	if (!outputNode.isEmpty())
+	{
+		pw_properties_set(playbackProps, PW_KEY_TARGET_OBJECT, outputNode.constData());
+	}
+
+	m_stream = pw_stream_new_simple(
+				pw_thread_loop_get_loop(m_loop),
+				"LMMS",
+				playbackProps,
 				&stream_events,
 				this);
 	
@@ -113,6 +281,29 @@ AudioPipeWire::AudioPipeWire(bool& successful, AudioEngine* audioEngine) :
 						PW_ID_ANY,
 						static_cast<pw_stream_flags>(PW_STREAM_FLAG_AUTOCONNECT | PW_STREAM_FLAG_MAP_BUFFERS | PW_STREAM_FLAG_RT_PROCESS),
 						params, 1);
+
+	if (!inputNode.isEmpty() && inputNode != disconnectedRepresentation.toUtf8())
+	{
+		auto captureProps = pw_properties_new(
+					PW_KEY_MEDIA_TYPE, "Audio",
+					PW_KEY_MEDIA_CATEGORY, "Capture",
+					PW_KEY_MEDIA_ROLE, "Music",
+					PW_KEY_TARGET_OBJECT, inputNode.constData(),
+					NULL);
+
+		m_captureStream = pw_stream_new_simple(
+					pw_thread_loop_get_loop(m_loop),
+					"LMMS Capture",
+					captureProps,
+					&capture_stream_events,
+					this);
+
+		pw_stream_connect(m_captureStream,
+							PW_DIRECTION_INPUT,
+							PW_ID_ANY,
+							static_cast<pw_stream_flags>(PW_STREAM_FLAG_AUTOCONNECT | PW_STREAM_FLAG_MAP_BUFFERS | PW_STREAM_FLAG_RT_PROCESS),
+							params, 1);
+	}
 
 	// TODO Negotiate preferred buffer sizes
 	// const auto framesPerPeriod = this->audioEngine()->framesPerPeriod();
@@ -133,6 +324,7 @@ AudioPipeWire::~AudioPipeWire()
 {
 	stopProcessing();
 
+	if (m_captureStream) { pw_stream_destroy(m_captureStream); }
 	pw_stream_destroy(m_stream);
 	pw_core_disconnect(m_core);
 	pw_context_destroy(m_context);
@@ -178,6 +370,39 @@ void AudioPipeWire::processStreams()
 	pw_stream_queue_buffer(m_stream, b);
 }
 
+void AudioPipeWire::processCapture()
+{
+	struct pw_buffer* b = pw_stream_dequeue_buffer(m_captureStream);
+	if (b == nullptr) { return; }
+
+	const struct spa_buffer* buf = b->buffer;
+	const auto* src = static_cast<const float*>(buf->datas[0].data);
+
+	if (src != nullptr)
+	{
+		const auto stride = sizeof(float) * DEFAULT_CHANNELS;
+		auto framesLeft = buf->datas[0].chunk->size / stride;
+
+		while (framesLeft > 0)
+		{
+			const auto frames = std::min<size_t>(framesLeft, m_captureBuffer.size());
+			for (size_t i = 0; i < frames; ++i)
+			{
+				m_captureBuffer[i] = SampleFrame(src[0], src[1]);
+				src += DEFAULT_CHANNELS;
+			}
+
+			if (AudioDevice::isRunning())
+			{
+				this->audioEngine()->pushInputFrames(m_captureBuffer.data(), static_cast<f_cnt_t>(frames));
+			}
+			framesLeft -= frames;
+		}
+	}
+
+	pw_stream_queue_buffer(m_captureStream, b);
+}
+
 void AudioPipeWire::startProcessingImpl()
 {
 	pw_thread_loop_start(m_loop);
@@ -192,9 +417,16 @@ AudioPipeWire::setupWidget::setupWidget( QWidget * _parent ) :
 	AudioDeviceSetupWidget( AudioPipeWire::name(), _parent )
 {
 	QFormLayout* form = new QFormLayout(this);
+	form->setFieldGrowthPolicy(QFormLayout::ExpandingFieldsGrow);
 
-	m_toBeImplementedLabel = new QLabel("To be implemented", this);
-	form->addRow(tr("Device"), m_toBeImplementedLabel);
+	const auto nodes = listAudioNodes();
+	const auto cm = ConfigManager::inst();
+
+	m_outputDevice = buildDeviceButton(this, cm->value(audioPipeWireClass, outputKey), tr("Default"), nodes.sinks);
+	form->addRow(tr("Output") + ":", m_outputDevice);
+
+	m_inputDevice = buildDeviceButton(this, cm->value(audioPipeWireClass, inputKey), disconnectedRepresentation, nodes.sources);
+	form->addRow(tr("Input") + ":", m_inputDevice);
 }
 
 AudioPipeWire::setupWidget::~setupWidget()
@@ -203,7 +435,9 @@ AudioPipeWire::setupWidget::~setupWidget()
 
 void AudioPipeWire::setupWidget::saveSettings()
 {
-	// TODO Save settings
+	const auto cm = ConfigManager::inst();
+	cm->setValue(audioPipeWireClass, outputKey, m_outputDevice->property(nodeNameProperty).toString());
+	cm->setValue(audioPipeWireClass, inputKey, m_inputDevice->property(nodeNameProperty).toString());
 }
 
 } // namespace lmms

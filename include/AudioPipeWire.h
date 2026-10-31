@@ -36,7 +36,9 @@
 
 #include <QObject>
 
-class QLabel;
+#include <vector>
+
+class QToolButton;
 
 namespace lmms
 {
@@ -54,6 +56,7 @@ public:
 	}
 
 	void processStreams();
+	void processCapture();
 
 	class setupWidget : public gui::AudioDeviceSetupWidget
 	{
@@ -64,7 +67,8 @@ public:
 		void saveSettings() override;
 
 	private:
-		QLabel* m_toBeImplementedLabel;
+		QToolButton* m_outputDevice;
+		QToolButton* m_inputDevice;
 	};
 
 private:
@@ -76,6 +80,9 @@ private:
 	pw_context* m_context = nullptr;
     pw_core* m_core = nullptr;
     pw_stream* m_stream = nullptr;
+	pw_stream* m_captureStream = nullptr;
+
+	std::vector<SampleFrame> m_captureBuffer;
 
 	// This is a scratch space like buffer that is used by PipeWire to create POD (plain old data) objects on the stack.
 	uint8_t m_podBuilderBuffer[1024];
